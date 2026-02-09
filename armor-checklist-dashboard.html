@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARMOR Checklist Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f3f4f6; color: #111827; }
+
+  /* Top bar */
+  .topbar { background: #111827; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .topbar-title { font-size: 20px; font-weight: 700; color: #fff; }
+  .topbar-sub { font-size: 14px; color: #9ca3af; margin-left: 12px; }
+  .topbar-actions { display: flex; gap: 8px; }
+  .topbar-btn { padding: 6px 14px; background: #374151; color: #d1d5db; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 500; }
+  .topbar-btn:hover { background: #4b5563; }
+  .topbar-btn label { cursor: pointer; }
+  .topbar-btn input[type=file] { display: none; }
+
+  /* Stats */
+  .stats { display: flex; gap: 16px; padding: 16px 24px; }
+  .stat-card { flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid #e5e7eb; }
+  .stat-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 24px; font-weight: 700; color: #111827; margin-top: 2px; }
+
+  /* Filters */
+  .filters { display: flex; gap: 12px; padding: 0 24px 16px; align-items: center; }
+  .filter-input { flex: 1; padding: 8px 14px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px; }
+  .filter-select { padding: 8px 14px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px; background: #fff; }
+  .filter-count { font-size: 12px; color: #6b7280; }
+
+  /* Table */
+  .table-wrap { padding: 0 24px 24px; }
+  .table-container { background: #fff; border-radius: 8px; border: 1px solid #e5e7eb; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: #f9fafb; border-bottom: 1px solid #e5e7eb; }
+  th { padding: 10px 14px; text-align: left; font-weight: 600; color: #374151; cursor: pointer; user-select: none; white-space: nowrap; }
+  th:hover { color: #111827; }
+  td { padding: 10px 14px; }
+  tbody tr { border-bottom: 1px solid #f3f4f6; cursor: pointer; }
+  tbody tr:hover { background: #f9fafb; }
+  tbody tr.selected { background: #eff6ff; }
+  .empty-row td { padding: 40px; text-align: center; color: #9ca3af; cursor: default; }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; margin-right: 4px; margin-bottom: 4px; }
+  .badge-good { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+  .badge-bad { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  .badge-inconclusive { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+  .score-badge { display: inline-block; padding: 4px 14px; border-radius: 9999px; font-size: 13px; font-weight: 700; }
+  .score-33 { background: #fee2e2; color: #991b1b; }
+  .score-66 { background: #fef9c3; color: #854d0e; }
+  .score-100 { background: #dcfce7; color: #166534; }
+  .status-badge { display: inline-block; padding: 4px 14px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+  .status-sufficient { background: #dcfce7; color: #166534; }
+  .status-insufficient { background: #fee2e2; color: #991b1b; }
+
+  /* Overlay + Detail Panel */
+  .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 99; display: none; }
+  .overlay.active { display: block; }
+  .detail-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 55%; min-width: 500px; background: #fff; box-shadow: -4px 0 20px rgba(0,0,0,0.12); z-index: 100; display: none; flex-direction: column; overflow: hidden; }
+  .detail-panel.active { display: flex; }
+  .detail-header { padding: 16px 20px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+  .detail-header h2 { font-size: 18px; margin: 0; }
+  .detail-header p { margin: 4px 0 0; font-size: 13px; color: #6b7280; }
+  .detail-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #9ca3af; padding: 4px 8px; }
+  .detail-body { flex: 1; overflow-y: auto; padding: 20px; }
+
+  /* Detail sections */
+  .detail-row { display: flex; gap: 16px; margin-bottom: 20px; }
+  .detail-card { flex: 1; padding: 14px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; }
+  .detail-card-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .detail-card p { margin: 0; font-size: 13px; color: #374151; }
+  .detail-card .mono { font-family: monospace; font-size: 14px; }
+  .summary-card { padding: 14px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 20px; }
+  .summary-card p.main { font-size: 14px; font-weight: 500; color: #111827; }
+  .summary-notes { margin-top: 10px; padding-top: 10px; border-top: 1px solid #e5e7eb; }
+  .summary-notes p { margin: 4px 0; font-size: 12px; color: #6b7280; }
+
+  /* Indicator cards */
+  .indicators-section h3 { font-size: 14px; margin-bottom: 10px; }
+  .indicator-card { border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+  .indicator-card.good { border: 1px solid #86efac; background: rgba(220,252,231,0.2); }
+  .indicator-card.bad { border: 1px solid #fca5a5; background: rgba(254,226,226,0.2); }
+  .indicator-card.inconclusive { border: 1px solid #fde047; background: rgba(254,249,195,0.2); }
+  .indicator-toggle { width: 100%; padding: 10px 14px; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; text-align: left; }
+  .indicator-toggle .left { display: flex; align-items: center; gap: 8px; }
+  .indicator-toggle .label { font-size: 13px; color: #374151; }
+  .indicator-toggle .arrow { font-size: 12px; color: #9ca3af; transition: transform 0.15s; }
+  .indicator-toggle .arrow.open { transform: rotate(180deg); }
+  .indicator-detail { padding: 0 14px 14px; font-size: 13px; line-height: 1.5; display: none; }
+  .indicator-detail.open { display: block; }
+  .indicator-detail strong { color: #374151; }
+  .indicator-detail p { margin: 4px 0; color: #4b5563; }
+  .customer-msg { padding: 10px; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; margin-top: 8px; }
+  .customer-msg strong { font-size: 12px; }
+  .customer-msg p { font-size: 12px; margin: 4px 0 0; }
+
+  /* Clarification */
+  .clarification-section { padding: 14px; background: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe; margin-bottom: 20px; }
+  .clarification-section .label { font-size: 11px; color: #1e40af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600; }
+  .clarification-section textarea { width: 100%; min-height: 100px; padding: 10px; border-radius: 6px; border: 1px solid #bfdbfe; font-size: 13px; font-family: inherit; resize: vertical; }
+  .save-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .save-btn { padding: 6px 16px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: 500; }
+  .save-btn:hover { background: #1d4ed8; }
+  .save-confirm { font-size: 12px; color: #16a34a; }
+
+  /* Paste modal */
+  .paste-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; justify-content: center; align-items: center; }
+  .paste-modal.active { display: flex; }
+  .paste-box { background: #fff; border-radius: 12px; padding: 24px; width: 600px; max-height: 80vh; display: flex; flex-direction: column; }
+  .paste-box h3 { margin-bottom: 12px; }
+  .paste-box textarea { flex: 1; min-height: 300px; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: monospace; font-size: 12px; resize: vertical; }
+  .paste-box .actions { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+  .paste-box .btn-primary { padding: 8px 20px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+  .paste-box .btn-secondary { padding: 8px 20px; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; }
+
+  /* Sync status */
+  .sync-indicator { display: flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 500; }
+  .sync-connected { background: #dcfce7; color: #166534; }
+  .sync-local { background: #fef9c3; color: #854d0e; }
+  .sync-error { background: #fee2e2; color: #991b1b; }
+  .sync-loading { background: #eff6ff; color: #1e40af; }
+
+  /* Config modal */
+  .config-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; justify-content: center; align-items: center; }
+  .config-modal.active { display: flex; }
+  .config-box { background: #fff; border-radius: 12px; padding: 24px; width: 520px; }
+  .config-box h3 { margin-bottom: 8px; }
+  .config-box p { font-size: 13px; color: #6b7280; margin-bottom: 12px; }
+  .config-box input { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: monospace; font-size: 12px; margin-bottom: 12px; }
+  .config-box .actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* Checklist Q&A */
+  .qa-section { padding: 14px; background: #fff7ed; border-radius: 8px; border: 1px solid #fed7aa; margin-bottom: 20px; }
+  .qa-section .qa-header { font-size: 11px; color: #c2410c; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; font-weight: 600; }
+  .qa-item { padding: 10px 12px; background: #fff; border-radius: 6px; border: 1px solid #fed7aa; margin-bottom: 6px; }
+  .qa-item .qa-q { font-size: 12px; color: #9a3412; font-weight: 600; margin-bottom: 4px; }
+  .qa-item .qa-a { font-size: 13px; color: #374151; white-space: pre-wrap; }
+  .qa-loading { font-size: 13px; color: #9a3412; font-style: italic; }
+  .qa-unavailable { font-size: 13px; color: #9ca3af; font-style: italic; }
+
+  /* PIN Lock Screen */
+  .lock-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #111827; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+  .lock-screen.hidden { display: none; }
+  .lock-box { background: #1f2937; border-radius: 16px; padding: 40px; width: 340px; text-align: center; border: 1px solid #374151; }
+  .lock-box h1 { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .lock-box p { font-size: 13px; color: #9ca3af; margin-bottom: 24px; }
+  .lock-box input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #4b5563; background: #374151; color: #fff; font-size: 20px; text-align: center; letter-spacing: 8px; font-family: monospace; outline: none; }
+  .lock-box input:focus { border-color: #60a5fa; }
+  .lock-box button { width: 100%; padding: 10px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+  .lock-box button:hover { background: #1d4ed8; }
+  .lock-error { color: #f87171; font-size: 13px; margin-top: 10px; min-height: 20px; }
+  .app-content { display: none; }
+  .app-content.unlocked { display: block; }
+</style>
+</head>
+<body>
+
+<!-- PIN Lock Screen -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-box">
+    <h1>ARMOR</h1>
+    <p>Enter PIN to access the dashboard</p>
+    <input type="password" id="pinInput" maxlength="10" placeholder="····" onkeydown="if(event.key==='Enter')checkPin()">
+    <button onclick="checkPin()">Unlock</button>
+    <div class="lock-error" id="pinError"></div>
+  </div>
+</div>
+
+<!-- App Content (hidden until PIN verified) -->
+<div class="app-content" id="appContent">
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div style="display:flex;align-items:center">
+    <span class="topbar-title">ARMOR</span>
+    <span class="topbar-sub">Checklist Analyzer Dashboard</span>
+  </div>
+  <div class="topbar-actions">
+    <span id="syncStatus" class="sync-indicator sync-local">● Local Only</span>
+    <button class="topbar-btn" onclick="document.getElementById('pasteModal').classList.add('active')">Paste JSON</button>
+    <button class="topbar-btn"><label>Import File<input type="file" accept=".json,.jsonl" onchange="handleFileImport(event)"></label></button>
+    <button class="topbar-btn" onclick="exportJsonl()">Export JSONL</button>
+    <button class="topbar-btn" onclick="exportJson()">Export JSON</button>
+    <button class="topbar-btn" onclick="document.getElementById('configModal').classList.add('active')">⚙ Sync</button>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats" id="statsRow"></div>
+
+<!-- Filters -->
+<div class="filters">
+  <input class="filter-input" type="text" id="searchInput" placeholder="Search company, email, or user ID..." oninput="renderTable()">
+  <select class="filter-select" id="scoreFilter" onchange="renderTable()">
+    <option value="all">All Scores</option>
+    <option value="33">Score 33</option>
+    <option value="66">Score 66</option>
+    <option value="100">Score 100</option>
+  </select>
+  <select class="filter-select" id="statusFilter" onchange="renderTable()">
+    <option value="all">All Statuses</option>
+    <option value="Sufficient">Sufficient</option>
+    <option value="Insufficient">Insufficient</option>
+  </select>
+  <span class="filter-count" id="filterCount"></span>
+</div>
+
+<!-- Table -->
+<div class="table-wrap">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="toggleSort('company')">Company<span id="sort_company"></span></th>
+          <th onclick="toggleSort('user_id')">User ID<span id="sort_user_id"></span></th>
+          <th onclick="toggleSort('customer_email')">Email<span id="sort_customer_email"></span></th>
+          <th onclick="toggleSort('checklist_score')">Score<span id="sort_checklist_score"></span></th>
+          <th onclick="toggleSort('checklist_status')">Status<span id="sort_checklist_status"></span></th>
+          <th onclick="toggleSort('selected_indicator_codes')">Indicators<span id="sort_selected_indicator_codes"></span></th>
+          <th onclick="toggleSort('_analyzed_at')">Analyzed<span id="sort__analyzed_at"></span></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Detail Panel -->
+<div class="overlay" id="overlay" onclick="closeDetail()"></div>
+<div class="detail-panel" id="detailPanel">
+  <div class="detail-header">
+    <div>
+      <h2 id="detailCompany"></h2>
+      <p id="detailEmail"></p>
+    </div>
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+  </div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+<!-- Paste Modal -->
+<div class="paste-modal" id="pasteModal">
+  <div class="paste-box">
+    <h3>Paste JSON Results</h3>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:12px">Paste one or more JSON evaluation results (single object, array, or one-per-line JSONL).</p>
+    <textarea id="pasteArea" placeholder='{"company":"...","checklist_score":33,...}'></textarea>
+    <div class="actions">
+      <button class="btn-secondary" onclick="document.getElementById('pasteModal').classList.remove('active')">Cancel</button>
+      <button class="btn-primary" onclick="handlePasteImport()">Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- Config Modal -->
+<div class="config-modal" id="configModal">
+  <div class="config-box">
+    <h3>Google Sheets Sync</h3>
+    <p>Paste your Google Apps Script web app URL to enable shared data across teammates. Leave blank to use local-only storage.</p>
+    <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+    <div style="font-size:12px;color:#6b7280;margin-bottom:12px">
+      <strong>Status:</strong> <span id="configStatusText">Not connected</span>
+    </div>
+    <div class="actions">
+      <button class="btn-secondary" onclick="disconnectSync()">Disconnect</button>
+      <button class="btn-secondary" onclick="document.getElementById('configModal').classList.remove('active')">Cancel</button>
+      <button class="btn-primary" onclick="saveAndTestSync()">Save & Test</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app-content -->
+
+<script>
+// ── PIN Authentication ──
+const PIN_HASH = 'fbce66f99c809283638f344ecb3d50674ea64189'; // SHA-1 of 1414
+const PIN_SESSION_KEY = 'armor_pin_authenticated';
+
+async function hashPin(pin) {
+  const data = new TextEncoder().encode(pin);
+  const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function checkPin() {
+  const pin = document.getElementById('pinInput').value;
+  const hash = await hashPin(pin);
+  if (hash === PIN_HASH) {
+    sessionStorage.setItem(PIN_SESSION_KEY, 'true');
+    unlockApp();
+  } else {
+    document.getElementById('pinError').textContent = 'Incorrect PIN';
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinInput').focus();
+  }
+}
+
+function unlockApp() {
+  document.getElementById('lockScreen').classList.add('hidden');
+  document.getElementById('appContent').classList.add('unlocked');
+  initApp();
+}
+
+// Check if already authenticated this session
+if (sessionStorage.getItem(PIN_SESSION_KEY) === 'true') {
+  unlockApp();
+} else {
+  document.getElementById('pinInput').focus();
+}
+
+// ── Sync Config ──
+const SYNC_URL_KEY = 'armor_checklist_dashboard_sync_url';
+
+function getSyncUrl() {
+  try { return localStorage.getItem(SYNC_URL_KEY) || ''; } catch(e) { return ''; }
+}
+function setSyncUrl(url) {
+  try { localStorage.setItem(SYNC_URL_KEY, url); } catch(e) {}
+}
+function isCloudMode() { return !!getSyncUrl(); }
+
+function updateSyncStatus(state, text) {
+  const el = document.getElementById('syncStatus');
+  el.className = 'sync-indicator sync-' + state;
+  const icons = { connected: '●', local: '●', error: '●', loading: '◌' };
+  el.textContent = (icons[state] || '●') + ' ' + text;
+}
+
+async function saveAndTestSync() {
+  const url = document.getElementById('scriptUrlInput').value.trim();
+  if (!url) {
+    disconnectSync();
+    return;
+  }
+  document.getElementById('configStatusText').textContent = 'Testing connection...';
+  try {
+    const resp = await fetch(url);
+    const json = await resp.json();
+    if (json.success) {
+      setSyncUrl(url);
+      document.getElementById('configStatusText').textContent = 'Connected! ' + json.data.length + ' submissions found.';
+      document.getElementById('configModal').classList.remove('active');
+      updateSyncStatus('connected', 'Synced (' + json.data.length + ')');
+      // Load cloud data
+      submissions = deduplicateSubmissions(json.data);
+      saveToStorage(); // cache locally too
+      renderStats();
+      renderTable();
+    } else {
+      document.getElementById('configStatusText').textContent = 'Error: ' + (json.error || 'Unknown error');
+    }
+  } catch (err) {
+    document.getElementById('configStatusText').textContent = 'Connection failed: ' + err.message;
+  }
+}
+
+function disconnectSync() {
+  setSyncUrl('');
+  document.getElementById('scriptUrlInput').value = '';
+  document.getElementById('configStatusText').textContent = 'Disconnected — using local storage only';
+  document.getElementById('configModal').classList.remove('active');
+  updateSyncStatus('local', 'Local Only');
+}
+
+// Cloud operations
+async function cloudFetch() {
+  const url = getSyncUrl();
+  if (!url) return null;
+  try {
+    updateSyncStatus('loading', 'Syncing...');
+    const resp = await fetch(url);
+    const json = await resp.json();
+    if (json.success) {
+      updateSyncStatus('connected', 'Synced (' + json.data.length + ')');
+      return json.data;
+    } else {
+      updateSyncStatus('error', 'Sync error');
+      return null;
+    }
+  } catch (err) {
+    updateSyncStatus('error', 'Offline');
+    return null;
+  }
+}
+
+async function cloudSave(items) {
+  const url = getSyncUrl();
+  if (!url) return null;
+  try {
+    // Fire-and-forget POST (Google Apps Script redirects break normal response reading)
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify({ submissions: Array.isArray(items) ? items : [items] })
+    });
+    // Wait for Apps Script to process, then verify via GET
+    await new Promise(r => setTimeout(r, 2000));
+    const fresh = await cloudFetch();
+    if (fresh) {
+      submissions = deduplicateSubmissions(fresh);
+      saveToStorage();
+      renderStats();
+      renderTable();
+    }
+    return { success: true };
+  } catch (err) {
+    updateSyncStatus('error', 'Save failed');
+    return null;
+  }
+}
+
+async function cloudDelete(email) {
+  const url = getSyncUrl();
+  if (!url) return false;
+  try {
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify({ action: 'delete', customer_email: email })
+    });
+    await new Promise(r => setTimeout(r, 2000));
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+// Fetch checklist Q&A from Analyzer Input tab
+async function fetchChecklistQA(email) {
+  const url = getSyncUrl();
+  if (!url) return null;
+  try {
+    const resp = await fetch(url + '?action=qa&email=' + encodeURIComponent(email));
+    const json = await resp.json();
+    if (json.success) return json.qa;
+    return null;
+  } catch (err) {
+    return null;
+  }
+}
+
+function renderQASection(containerId, qaData) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!qaData || qaData.length === 0) {
+    el.innerHTML = '<p class="qa-unavailable">No checklist Q&A data found for this customer</p>';
+    return;
+  }
+  // Skip metadata columns (A-E, cols 1-5) and show only the Q&A columns (F+)
+  const qaItems = qaData.filter(item => item.col >= 6);
+  if (qaItems.length === 0) {
+    el.innerHTML = '<p class="qa-unavailable">No checklist Q&A data found for this customer</p>';
+    return;
+  }
+  el.innerHTML = qaItems.map(item =>
+    `<div class="qa-item"><div class="qa-q">${item.question}</div><div class="qa-a">${item.answer}</div></div>`
+  ).join('');
+}
+
+// ── Persistence ──
+const STORAGE_KEY = 'armor_checklist_dashboard_submissions';
+function saveToStorage() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(submissions)); } catch(e) {}
+}
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return null;
+}
+
+// ── State ──
+let submissions = [];
+let selectedIdx = null;
+let sortField = '_analyzed_at';
+let sortDir = 'desc';
+
+// ── Sample data (used only on first load) ──
+const SAMPLE = {
+  company: "Minnesota Insurance Agencies",
+  customer_email: "ryan.libby@midwestinsuranceagencies.com",
+  user_id: "1253984611",
+  answer_purpose: "Minnesota Insurance Agencies states the purpose of their calls is to provide value, build relationships, or deliver necessary information. No specific product, service, or recipient profile is described.",
+  answer_reaction: "The caller states recipients may react poorly because they may be busy at the time or have technical issues.",
+  checklist_summary: 'These calls are potentially unwanted / at face value, these calls sound "spammy"',
+  checklist_score: 33,
+  checklist_status: "Insufficient",
+  selected_indicator_codes: "h,l,n,q,r",
+  selected_indicators: [
+    {id:"H",type:"Bad",label:"Bad – calls are not requested by recipient",evidence:["Caller answered 'No' to direct consent and 'No' to prior business relationship. No evidence of recipient-initiated contact or opt-in."],customer_message:"Carriers consider calls that are not explicitly requested by recipients to be deserving of spam flags, especially when there is evidence of negative consumer feedback such as low answer rates, short call durations, customer complaints, or number blocks. When calls are viewed as unexpected or unsolicited, remediation options are extremely limited, and ARMOR® is not able to pursue further remediation until calling practices or consumer feedback change materially."},
+    {id:"L",type:"Inconclusive",label:"Inconclusive – unclear call purpose",evidence:["Call purpose is described as 'to provide value, build relationships, or deliver necessary information.' This is generic and does not identify the business type, product, service, or recipient profile."],customer_message:"Carriers evaluate whether calls are appropriate based on a clear, consistent call purpose. Please describe what your business does, who you call, and the primary purpose of your calls."},
+    {id:"N",type:"Inconclusive",label:"Inconclusive – unclear lead sources or processes",evidence:["Lead curation is described only as 'Our numbers are verified with software.' No explanation is provided for where leads originate or how contact information is obtained."],customer_message:"Lead quality creates clear signals carriers use to evaluate whether calls are expected and/or well-received by recipients. Please describe how you get your leads, and ensure they are well-targeted to your product/service."},
+    {id:"Q",type:"Inconclusive",label:"Inconclusive – Do Not Call process unclear",evidence:["The DNC explanation only directs recipients to register on the national donotcall.gov registry. No internal operational process is described for honoring opt-out requests."],customer_message:"Carriers expect clear Do-Not-Call controls to ensure recipients on the list are not contacted. Please describe how you prevent calling contacts on the Do-Not-Call list, how opt-out options are disclosed to contacts, and how opt-out requests are handled and enforced."},
+    {id:"R",type:"Inconclusive",label:"Inconclusive – call timing and frequency controls are unclear",evidence:["Frequency is partially addressed but no call timing limits are described — no business-hour windows, time-zone restrictions, or weekday-only policies."],customer_message:"Even requested calls can become a nuisance if they are too frequent, too close together, or placed at inopportune times. Please describe how call timing is determined and how call frequency is limited."}
+  ],
+  checklist_summary_notes: [
+    "No evidence of prior business relationship or recipient-initiated request; calls are classified as unrequested.",
+    "Call purpose, lead sourcing, DNC process, and call timing controls are all insufficiently described.",
+    "Summary is Potentially Unwanted because unrequested calls (H) are paired with multiple unresolved ambiguities (L, N, Q, R)."
+  ],
+  customer_clarification: "",
+  _analyzed_at: new Date().toISOString()
+};
+
+// Deduplicate array by customer_email, keeping the most recent entry
+function deduplicateSubmissions(arr) {
+  const seen = new Map();
+  arr.forEach(s => {
+    const key = (s.customer_email || '').toLowerCase().trim();
+    if (!key) { seen.set(Math.random().toString(), s); return; }
+    const existing = seen.get(key);
+    if (!existing || (s._analyzed_at || '') > (existing._analyzed_at || '')) {
+      // Preserve clarification from older entry if newer is empty
+      if (existing && !s.customer_clarification && existing.customer_clarification) {
+        s.customer_clarification = existing.customer_clarification;
+      }
+      seen.set(key, s);
+    }
+  });
+  return Array.from(seen.values());
+}
+
+// Load saved data or use sample on first run
+const saved = loadFromStorage();
+if (saved && saved.length > 0) {
+  submissions = deduplicateSubmissions(saved);
+  // Save back if dedup removed any entries
+  if (submissions.length !== saved.length) saveToStorage();
+} else {
+  submissions.push(SAMPLE);
+  saveToStorage();
+}
+
+// ── Helpers ──
+function badgeClass(type) {
+  if (type === 'Good') return 'badge-good';
+  if (type === 'Bad') return 'badge-bad';
+  return 'badge-inconclusive';
+}
+
+function indicatorBadges(indicators) {
+  return (indicators || []).map(i => `<span class="badge ${badgeClass(i.type)}">${i.id}</span>`).join('');
+}
+
+function scoreBadge(score) {
+  return `<span class="score-badge score-${score}">${score}</span>`;
+}
+
+function statusBadge(status) {
+  return `<span class="status-badge status-${status.toLowerCase()}">${status}</span>`;
+}
+
+function getKey(s) { return (s.customer_email || '').toLowerCase().trim(); }
+
+function importMessage(r) {
+  const parts = [];
+  if (r.added) parts.push(r.added + ' new');
+  if (r.replaced) parts.push(r.replaced + ' updated');
+  return parts.length ? 'Imported: ' + parts.join(', ') : 'No new submissions to import';
+}
+
+// ── Stats ──
+function renderStats() {
+  const total = submissions.length;
+  const suf = submissions.filter(s => s.checklist_status === 'Sufficient').length;
+  const s33 = submissions.filter(s => s.checklist_score === 33).length;
+  const s66 = submissions.filter(s => s.checklist_score === 66).length;
+  const s100 = submissions.filter(s => s.checklist_score === 100).length;
+  document.getElementById('statsRow').innerHTML = [
+    {l:'Total',v:total,bg:'#fff'},{l:'Sufficient',v:suf,bg:'#dcfce7'},{l:'Insufficient',v:total-suf,bg:'#fee2e2'},
+    {l:'Score 33',v:s33,bg:'#fee2e2'},{l:'Score 66',v:s66,bg:'#fef9c3'},{l:'Score 100',v:s100,bg:'#dcfce7'}
+  ].map(s => `<div class="stat-card" style="background:${s.bg}"><div class="stat-label">${s.l}</div><div class="stat-value">${s.v}</div></div>`).join('');
+}
+
+// ── Filtering & Sorting ──
+function getFiltered() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const scoreF = document.getElementById('scoreFilter').value;
+  const statusF = document.getElementById('statusFilter').value;
+  let result = submissions.filter(s => {
+    if (scoreF !== 'all' && s.checklist_score !== Number(scoreF)) return false;
+    if (statusF !== 'all' && s.checklist_status !== statusF) return false;
+    if (search) {
+      return (s.company||'').toLowerCase().includes(search) ||
+             (s.customer_email||'').toLowerCase().includes(search) ||
+             (s.user_id||'').includes(search);
+    }
+    return true;
+  });
+  result.sort((a, b) => {
+    let av = a[sortField] || '', bv = b[sortField] || '';
+    if (typeof av === 'number') return sortDir === 'asc' ? av - bv : bv - av;
+    return sortDir === 'asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
+  });
+  return result;
+}
+
+function toggleSort(field) {
+  if (sortField === field) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  else { sortField = field; sortDir = 'asc'; }
+  renderTable();
+}
+
+// ── Table ──
+function renderTable() {
+  // Sort indicators
+  ['company','user_id','customer_email','checklist_score','checklist_status','selected_indicator_codes','_analyzed_at'].forEach(f => {
+    const el = document.getElementById('sort_' + f);
+    if (el) el.textContent = sortField === f ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '';
+  });
+
+  const filtered = getFiltered();
+  document.getElementById('filterCount').textContent = filtered.length + ' result' + (filtered.length !== 1 ? 's' : '');
+
+  const tbody = document.getElementById('tableBody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No submissions match your filters</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map((s, i) => {
+    const idx = submissions.indexOf(s);
+    const date = s._analyzed_at ? new Date(s._analyzed_at).toLocaleDateString() : '—';
+    return `<tr class="${selectedIdx === idx ? 'selected' : ''}" onclick="openDetail(${idx})">
+      <td style="font-weight:500">${s.company || ''}</td>
+      <td style="color:#6b7280;font-family:monospace;font-size:12px">${s.user_id || ''}</td>
+      <td style="color:#6b7280">${s.customer_email || ''}</td>
+      <td>${scoreBadge(s.checklist_score)}</td>
+      <td>${statusBadge(s.checklist_status)}</td>
+      <td>${indicatorBadges(s.selected_indicators)}</td>
+      <td style="color:#6b7280;font-size:12px">${date}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Detail Panel ──
+function openDetail(idx) {
+  selectedIdx = idx;
+  const s = submissions[idx];
+  document.getElementById('detailCompany').textContent = s.company;
+  document.getElementById('detailEmail').textContent = s.customer_email;
+
+  let html = '';
+
+  // Score row
+  html += `<div class="detail-row">
+    <div class="detail-card"><div class="detail-card-label">Score</div>${scoreBadge(s.checklist_score)}</div>
+    <div class="detail-card"><div class="detail-card-label">Status</div>${statusBadge(s.checklist_status)}</div>
+    <div class="detail-card" style="flex:2"><div class="detail-card-label">User ID</div><span class="mono">${s.user_id}</span></div>
+  </div>`;
+
+  // Summary
+  html += `<div class="summary-card">
+    <div class="detail-card-label">Checklist Summary</div>
+    <p class="main">${s.checklist_summary}</p>
+    ${(s.checklist_summary_notes||[]).length ? '<div class="summary-notes">' + s.checklist_summary_notes.map(n => `<p>• ${n}</p>`).join('') + '</div>' : ''}
+  </div>`;
+
+  // Purpose & Reaction
+  html += `<div class="detail-row">
+    <div class="detail-card"><div class="detail-card-label">Call Purpose</div><p>${s.answer_purpose || ''}</p></div>
+    <div class="detail-card"><div class="detail-card-label">Potential Reaction</div><p>${s.answer_reaction || ''}</p></div>
+  </div>`;
+
+  // Indicators
+  html += `<div class="indicators-section">
+    <h3>Selected Indicators (${(s.selected_indicators||[]).length})</h3>
+    <div style="margin-bottom:10px">${indicatorBadges(s.selected_indicators)}</div>`;
+
+  (s.selected_indicators || []).forEach((ind, i) => {
+    const cls = ind.type === 'Good' ? 'good' : ind.type === 'Bad' ? 'bad' : 'inconclusive';
+    html += `<div class="indicator-card ${cls}">
+      <button class="indicator-toggle" onclick="toggleIndicator(${i})">
+        <span class="left"><span class="badge badge-${cls}">${ind.id}</span><span class="label">${ind.label}</span></span>
+        <span class="arrow" id="arrow_${i}">▼</span>
+      </button>
+      <div class="indicator-detail" id="indDetail_${i}">
+        <div><strong>Evidence:</strong>${ind.evidence.map(e => `<p>${e}</p>`).join('')}</div>
+        ${ind.customer_message ? `<div class="customer-msg"><strong>Customer Message:</strong><p>${ind.customer_message}</p></div>` : ''}
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+
+  // Clarification (editable — syncs to Submissions json_data + Analyzer Input Column B)
+  const clarText = s.customer_clarification || (s.reanalysis && s.reanalysis.clarification_summary) || '';
+  html += `<div class="clarification-section">
+    <div class="label">Customer Clarification</div>
+    <textarea id="clarificationInput" style="width:100%;min-height:80px;padding:10px;border-radius:6px;border:1px solid #bfdbfe;font-size:13px;font-family:inherit;resize:vertical" placeholder="Add customer clarification notes here...">${clarText}</textarea>
+    <div class="save-row">
+      <button class="save-btn" onclick="saveClarification(${idx})">Save</button>
+      <span class="save-confirm" id="saveConfirm" style="display:none">✓ Saved</span>
+    </div>
+  </div>`;
+
+  // Reanalysis
+  if (s.reanalysis) {
+    html += `<div style="padding:14px;background:#f0fdf4;border-radius:8px;border:1px solid #86efac;margin-bottom:20px">
+      <div class="detail-card-label" style="color:#166534;font-weight:600">Re-analysis Results</div>
+      <p style="font-size:13px;color:#374151;margin:0 0 8px">${s.reanalysis.clarification_summary || ''}</p>
+      ${(s.reanalysis.change_log||[]).map(c => `<div style="font-size:12px;color:#4b5563;padding:4px 0"><span class="badge ${c.action==='added'?'badge-bad':'badge-good'}">${c.action}</span> ${c.indicator_id}: ${c.reason}</div>`).join('')}
+    </div>`;
+  }
+
+  // Manual Override
+  html += `<div style="padding:14px;background:#faf5ff;border-radius:8px;border:1px solid #d8b4fe;margin-bottom:20px">
+    <div class="detail-card-label" style="color:#7c3aed;font-weight:600">Manual Override</div>
+    ${s.override_log && s.override_log.applied
+      ? `<div style="display:flex;gap:16px;margin:8px 0">
+          <div style="flex:1"><span style="font-size:12px;color:#6b7280;font-weight:600">Added:</span>
+            <span style="font-size:13px;color:#374151;margin-left:6px">${(s.override_log.added || []).join(', ') || 'None'}</span></div>
+          <div style="flex:1"><span style="font-size:12px;color:#6b7280;font-weight:600">Removed:</span>
+            <span style="font-size:13px;color:#374151;margin-left:6px">${(s.override_log.removed || []).join(', ') || 'None'}</span></div>
+        </div>
+        ${s.override_log.reason ? `<div style="margin-top:8px;padding:10px;background:#fff;border-radius:6px;border:1px solid #e9d5ff">
+          <span style="font-size:12px;color:#6b7280;font-weight:600">Reason:</span>
+          <p style="font-size:13px;color:#374151;margin:4px 0 0">${s.override_log.reason}</p>
+        </div>` : ''}`
+      : `<p style="font-size:13px;color:#9ca3af;margin:8px 0 0;font-style:italic">No manual override applied</p>`
+    }
+  </div>`;
+
+  // Checklist Q&A section (loaded async from Analyzer Input tab)
+  html += `<div class="qa-section">
+    <div class="qa-header">Checklist Q&A</div>
+    <div id="qaContent">${isCloudMode()
+      ? '<p class="qa-loading">Loading checklist Q&A...</p>'
+      : '<p class="qa-unavailable">Connect to Google Sheets to view checklist Q&A</p>'
+    }</div>
+  </div>`;
+
+  // Delete — placed at the bottom, well away from close button
+  html += `<div style="border-top:1px solid #e5e7eb;padding-top:16px;margin-top:12px;display:flex;align-items:center;gap:8px">
+    <span id="deleteInitial"><button onclick="showDeleteConfirm()" style="padding:5px 14px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:6px;font-size:12px;cursor:pointer;font-weight:500">Delete this submission</button></span>
+    <span id="deleteConfirm" style="display:none;align-items:center;gap:6px">
+      <span style="font-size:12px;color:#991b1b;font-weight:500">Are you sure?</span>
+      <button onclick="confirmDelete()" style="padding:5px 12px;background:#dc2626;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">Yes, delete</button>
+      <button onclick="cancelDelete()" style="padding:5px 12px;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:6px;font-size:12px;cursor:pointer">Cancel</button>
+    </span>
+  </div>`;
+
+  document.getElementById('detailBody').innerHTML = html;
+  document.getElementById('overlay').classList.add('active');
+  document.getElementById('detailPanel').classList.add('active');
+  renderTable();
+
+  // Async load Q&A if connected
+  if (isCloudMode() && s.customer_email) {
+    fetchChecklistQA(s.customer_email).then(qa => {
+      renderQASection('qaContent', qa);
+    });
+  }
+}
+
+function closeDetail() {
+  selectedIdx = null;
+  document.getElementById('overlay').classList.remove('active');
+  document.getElementById('detailPanel').classList.remove('active');
+  renderTable();
+}
+
+function toggleIndicator(i) {
+  const detail = document.getElementById('indDetail_' + i);
+  const arrow = document.getElementById('arrow_' + i);
+  if (detail.classList.contains('open')) {
+    detail.classList.remove('open');
+    arrow.classList.remove('open');
+  } else {
+    detail.classList.add('open');
+    arrow.classList.add('open');
+  }
+}
+
+function saveClarification(idx) {
+  const text = document.getElementById('clarificationInput').value;
+  submissions[idx].customer_clarification = text;
+  saveToStorage();
+  if (isCloudMode()) {
+    // Save to Submissions sheet (json_data)
+    cloudSave(submissions[idx]);
+    // Also save to Analyzer Input Column B
+    const email = submissions[idx].customer_email;
+    if (email) {
+      fetch(getSyncUrl(), {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify({ action: 'clarification', customer_email: email, clarification: text })
+      }).catch(() => {});
+    }
+  }
+  const conf = document.getElementById('saveConfirm');
+  conf.style.display = 'inline';
+  setTimeout(() => conf.style.display = 'none', 2000);
+}
+
+// ── Delete (two-step confirmation) ──
+function showDeleteConfirm() {
+  document.getElementById('deleteInitial').style.display = 'none';
+  document.getElementById('deleteConfirm').style.display = 'flex';
+}
+function cancelDelete() {
+  document.getElementById('deleteConfirm').style.display = 'none';
+  document.getElementById('deleteInitial').style.display = 'inline';
+}
+function confirmDelete() {
+  if (selectedIdx == null) return;
+  const email = submissions[selectedIdx].customer_email;
+  submissions.splice(selectedIdx, 1);
+  saveToStorage();
+  // Delete from cloud if connected
+  if (isCloudMode()) { cloudDelete(email); }
+  closeDetail();
+  renderStats();
+  renderTable();
+}
+// Reset delete state when opening a new detail
+function resetDeleteButtons() {
+  document.getElementById('deleteConfirm').style.display = 'none';
+  document.getElementById('deleteInitial').style.display = 'inline';
+}
+
+// ── Import/Export ──
+function addSubmissions(data) {
+  if (!Array.isArray(data)) data = [data];
+  let added = 0, replaced = 0;
+  data.forEach(d => {
+    d._analyzed_at = d._analyzed_at || new Date().toISOString();
+    d.customer_clarification = d.customer_clarification || '';
+    const key = getKey(d);
+    const existingIdx = submissions.findIndex(s => getKey(s) === key);
+    if (existingIdx >= 0) {
+      if (!d.customer_clarification && submissions[existingIdx].customer_clarification) {
+        d.customer_clarification = submissions[existingIdx].customer_clarification;
+      }
+      submissions[existingIdx] = d;
+      replaced++;
+    } else {
+      submissions.push(d);
+      added++;
+    }
+  });
+  saveToStorage();
+  renderStats();
+  renderTable();
+  // Push to cloud if connected
+  if (isCloudMode()) { cloudSave(data); }
+  return { added, replaced };
+}
+
+function handleFileImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const text = ev.target.result;
+    try {
+      if (file.name.endsWith('.jsonl')) {
+        const items = text.trim().split('\n').filter(Boolean).map(l => JSON.parse(l));
+        const r = addSubmissions(items);
+        alert(importMessage(r));
+      } else {
+        const data = JSON.parse(text);
+        const r = addSubmissions(data);
+        alert(importMessage(r));
+      }
+    } catch(err) { alert('Import error: ' + err.message); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function handlePasteImport() {
+  const text = document.getElementById('pasteArea').value.trim();
+  if (!text) return;
+  try {
+    let data;
+    if (text.startsWith('[') || text.startsWith('{')) {
+      data = JSON.parse(text.startsWith('[') ? text : '[' + text + ']');
+    } else {
+      data = text.split('\n').filter(Boolean).map(l => JSON.parse(l));
+    }
+    const r = addSubmissions(data);
+    document.getElementById('pasteModal').classList.remove('active');
+    document.getElementById('pasteArea').value = '';
+    alert(importMessage(r));
+  } catch(err) { alert('Parse error: ' + err.message); }
+}
+
+function exportJsonl() {
+  const text = submissions.map(s => JSON.stringify(s)).join('\n');
+  downloadFile(text, `armor-results-${new Date().toISOString().slice(0,10)}.jsonl`, 'application/jsonl');
+}
+
+function exportJson() {
+  const text = JSON.stringify(submissions, null, 2);
+  downloadFile(text, `armor-results-${new Date().toISOString().slice(0,10)}.json`, 'application/json');
+}
+
+function downloadFile(content, filename, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Init (called after PIN verification) ──
+async function initApp() {
+  renderStats();
+  renderTable();
+
+  // Initialize sync status and load from cloud if configured
+  const url = getSyncUrl();
+  document.getElementById('scriptUrlInput').value = url;
+  if (url) {
+    updateSyncStatus('loading', 'Connecting...');
+    const data = await cloudFetch();
+    if (data) {
+      submissions = deduplicateSubmissions(data);
+      saveToStorage();
+      renderStats();
+      renderTable();
+    }
+  }
+}
+</script>
+</body>
+</html>
