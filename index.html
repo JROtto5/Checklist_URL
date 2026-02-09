@@ -6,154 +6,223 @@
 <title>ARMOR Checklist Dashboard</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f3f4f6; color: #111827; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%); color: #111827; min-height: 100vh; }
+
+  /* Animations */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  .fade-in { animation: fadeIn 0.3s ease-out; }
 
   /* Top bar */
-  .topbar { background: #111827; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
-  .topbar-title { font-size: 20px; font-weight: 700; color: #fff; }
-  .topbar-sub { font-size: 14px; color: #9ca3af; margin-left: 12px; }
-  .topbar-actions { display: flex; gap: 8px; }
-  .topbar-btn { padding: 6px 14px; background: #374151; color: #d1d5db; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 500; }
-  .topbar-btn:hover { background: #4b5563; }
-  .topbar-btn label { cursor: pointer; }
+  .topbar { background: linear-gradient(135deg, #111827 0%, #1f2937 100%); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 50; }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .topbar-title { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+  .topbar-title span { background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .topbar-sub { font-size: 13px; color: #9ca3af; padding-left: 16px; border-left: 1px solid #374151; }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+  .topbar-btn { padding: 8px 16px; background: #374151; color: #e5e7eb; border: none; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+  .topbar-btn:hover { background: #4b5563; transform: translateY(-1px); }
+  .topbar-btn.primary { background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); color: #fff; }
+  .topbar-btn.primary:hover { box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4); }
+  .topbar-btn label { cursor: pointer; display: flex; align-items: center; gap: 6px; }
   .topbar-btn input[type=file] { display: none; }
 
   /* Stats */
-  .stats { display: flex; gap: 16px; padding: 16px 24px; }
-  .stat-card { flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid #e5e7eb; }
-  .stat-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
-  .stat-value { font-size: 24px; font-weight: 700; color: #111827; margin-top: 2px; }
+  .stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; padding: 20px 24px; }
+  .stat-card { padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: all 0.2s; position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent); }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+  .stat-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .stat-value { font-size: 28px; font-weight: 800; color: #111827; margin-top: 4px; }
 
   /* Filters */
-  .filters { display: flex; gap: 12px; padding: 0 24px 16px; align-items: center; }
-  .filter-input { flex: 1; padding: 8px 14px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px; }
-  .filter-select { padding: 8px 14px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px; background: #fff; }
-  .filter-count { font-size: 12px; color: #6b7280; }
+  .filters { display: flex; gap: 12px; padding: 0 24px 20px; align-items: center; flex-wrap: wrap; }
+  .filter-input { flex: 1; min-width: 250px; padding: 10px 16px; border-radius: 10px; border: 2px solid #e5e7eb; font-size: 14px; transition: all 0.2s; background: #fff; }
+  .filter-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+  .filter-select { padding: 10px 16px; border-radius: 10px; border: 2px solid #e5e7eb; font-size: 14px; background: #fff; cursor: pointer; transition: all 0.2s; }
+  .filter-select:focus { outline: none; border-color: #2563eb; }
+  .filter-count { font-size: 13px; color: #6b7280; font-weight: 500; background: #f3f4f6; padding: 6px 12px; border-radius: 20px; }
 
   /* Table */
   .table-wrap { padding: 0 24px 24px; }
-  .table-container { background: #fff; border-radius: 8px; border: 1px solid #e5e7eb; overflow: hidden; }
+  .table-container { background: #fff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  thead tr { background: #f9fafb; border-bottom: 1px solid #e5e7eb; }
-  th { padding: 10px 14px; text-align: left; font-weight: 600; color: #374151; cursor: pointer; user-select: none; white-space: nowrap; }
-  th:hover { color: #111827; }
-  td { padding: 10px 14px; }
-  tbody tr { border-bottom: 1px solid #f3f4f6; cursor: pointer; }
-  tbody tr:hover { background: #f9fafb; }
-  tbody tr.selected { background: #eff6ff; }
-  .empty-row td { padding: 40px; text-align: center; color: #9ca3af; cursor: default; }
+  thead tr { background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-bottom: 2px solid #e5e7eb; }
+  th { padding: 14px 16px; text-align: left; font-weight: 700; color: #374151; cursor: pointer; user-select: none; white-space: nowrap; transition: all 0.2s; }
+  th:hover { color: #2563eb; background: rgba(37, 99, 235, 0.05); }
+  td { padding: 14px 16px; }
+  tbody tr { border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: all 0.15s; }
+  tbody tr:hover { background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%); }
+  tbody tr.selected { background: linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%); }
+  .empty-row td { padding: 60px; text-align: center; color: #9ca3af; cursor: default; font-size: 15px; }
 
   /* Badges */
-  .badge { display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; margin-right: 4px; margin-bottom: 4px; }
-  .badge-good { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
-  .badge-bad { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-  .badge-inconclusive { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
-  .score-badge { display: inline-block; padding: 4px 14px; border-radius: 9999px; font-size: 13px; font-weight: 700; }
-  .score-33 { background: #fee2e2; color: #991b1b; }
-  .score-66 { background: #fef9c3; color: #854d0e; }
-  .score-100 { background: #dcfce7; color: #166534; }
-  .status-badge { display: inline-block; padding: 4px 14px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
-  .status-sufficient { background: #dcfce7; color: #166534; }
-  .status-insufficient { background: #fee2e2; color: #991b1b; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; margin-right: 4px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .badge-good { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #166534; border: 1px solid #86efac; }
+  .badge-bad { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #991b1b; border: 1px solid #fca5a5; }
+  .badge-inconclusive { background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%); color: #854d0e; border: 1px solid #fde047; }
+  .score-badge { display: inline-block; padding: 6px 16px; border-radius: 9999px; font-size: 14px; font-weight: 800; }
+  .score-33 { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #991b1b; }
+  .score-66 { background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%); color: #854d0e; }
+  .score-100 { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #166534; }
+  .status-badge { display: inline-block; padding: 6px 16px; border-radius: 9999px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+  .status-sufficient { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #166534; }
+  .status-insufficient { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #991b1b; }
+
+  /* Sync status */
+  .sync-indicator { display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; transition: all 0.3s; }
+  .sync-connected { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #166534; }
+  .sync-local { background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%); color: #854d0e; }
+  .sync-error { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #991b1b; }
+  .sync-loading { background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%); color: #1e40af; }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .sync-loading .sync-dot { animation: pulse 1s infinite; }
+  .sync-timer { font-size: 10px; opacity: 0.8; margin-left: 4px; }
 
   /* Overlay + Detail Panel */
-  .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 99; display: none; }
-  .overlay.active { display: block; }
-  .detail-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 55%; min-width: 500px; background: #fff; box-shadow: -4px 0 20px rgba(0,0,0,0.12); z-index: 100; display: none; flex-direction: column; overflow: hidden; }
-  .detail-panel.active { display: flex; }
-  .detail-header { padding: 16px 20px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-  .detail-header h2 { font-size: 18px; margin: 0; }
+  .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 99; display: none; }
+  .overlay.active { display: block; animation: fadeIn 0.2s ease-out; }
+  .detail-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 58%; min-width: 520px; background: #fff; box-shadow: -8px 0 40px rgba(0,0,0,0.15); z-index: 100; display: none; flex-direction: column; overflow: hidden; }
+  .detail-panel.active { display: flex; animation: slideIn 0.3s ease-out; }
+  .detail-header { padding: 20px 24px; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+  .detail-header h2 { font-size: 20px; font-weight: 700; margin: 0; color: #111827; }
   .detail-header p { margin: 4px 0 0; font-size: 13px; color: #6b7280; }
-  .detail-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #9ca3af; padding: 4px 8px; }
-  .detail-body { flex: 1; overflow-y: auto; padding: 20px; }
+  .detail-close { background: #f3f4f6; border: none; font-size: 18px; cursor: pointer; color: #6b7280; padding: 8px 12px; border-radius: 8px; transition: all 0.2s; }
+  .detail-close:hover { background: #e5e7eb; color: #111827; }
+  .detail-body { flex: 1; overflow-y: auto; padding: 24px; }
 
   /* Detail sections */
   .detail-row { display: flex; gap: 16px; margin-bottom: 20px; }
-  .detail-card { flex: 1; padding: 14px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; }
-  .detail-card-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-  .detail-card p { margin: 0; font-size: 13px; color: #374151; }
-  .detail-card .mono { font-family: monospace; font-size: 14px; }
-  .summary-card { padding: 14px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 20px; }
-  .summary-card p.main { font-size: 14px; font-weight: 500; color: #111827; }
-  .summary-notes { margin-top: 10px; padding-top: 10px; border-top: 1px solid #e5e7eb; }
-  .summary-notes p { margin: 4px 0; font-size: 12px; color: #6b7280; }
+  .detail-card { flex: 1; padding: 16px; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-radius: 12px; border: 1px solid #e5e7eb; }
+  .detail-card-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600; }
+  .detail-card p { margin: 0; font-size: 13px; color: #374151; line-height: 1.5; }
+  .detail-card .mono { font-family: 'SF Mono', Monaco, monospace; font-size: 14px; color: #111827; }
+  .summary-card { padding: 18px; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-radius: 12px; border: 1px solid #e5e7eb; margin-bottom: 20px; }
+  .summary-card p.main { font-size: 15px; font-weight: 600; color: #111827; line-height: 1.5; }
+  .summary-notes { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb; }
+  .summary-notes p { margin: 6px 0; font-size: 13px; color: #6b7280; line-height: 1.5; }
 
   /* Indicator cards */
-  .indicators-section h3 { font-size: 14px; margin-bottom: 10px; }
-  .indicator-card { border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
-  .indicator-card.good { border: 1px solid #86efac; background: rgba(220,252,231,0.2); }
-  .indicator-card.bad { border: 1px solid #fca5a5; background: rgba(254,226,226,0.2); }
-  .indicator-card.inconclusive { border: 1px solid #fde047; background: rgba(254,249,195,0.2); }
-  .indicator-toggle { width: 100%; padding: 10px 14px; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; text-align: left; }
-  .indicator-toggle .left { display: flex; align-items: center; gap: 8px; }
-  .indicator-toggle .label { font-size: 13px; color: #374151; }
-  .indicator-toggle .arrow { font-size: 12px; color: #9ca3af; transition: transform 0.15s; }
+  .indicators-section { margin-bottom: 20px; }
+  .indicators-section h3 { font-size: 15px; margin-bottom: 12px; font-weight: 700; color: #111827; }
+  .indicator-card { border-radius: 12px; margin-bottom: 10px; overflow: hidden; transition: all 0.2s; }
+  .indicator-card:hover { transform: translateX(4px); }
+  .indicator-card.good { border: 1px solid #86efac; background: linear-gradient(135deg, rgba(220,252,231,0.3) 0%, rgba(187,247,208,0.3) 100%); }
+  .indicator-card.bad { border: 1px solid #fca5a5; background: linear-gradient(135deg, rgba(254,226,226,0.3) 0%, rgba(254,202,202,0.3) 100%); }
+  .indicator-card.inconclusive { border: 1px solid #fde047; background: linear-gradient(135deg, rgba(254,249,195,0.3) 0%, rgba(254,240,138,0.3) 100%); }
+  .indicator-toggle { width: 100%; padding: 14px 16px; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; text-align: left; }
+  .indicator-toggle .left { display: flex; align-items: center; gap: 10px; }
+  .indicator-toggle .label { font-size: 13px; color: #374151; font-weight: 500; }
+  .indicator-toggle .arrow { font-size: 12px; color: #9ca3af; transition: transform 0.2s; }
   .indicator-toggle .arrow.open { transform: rotate(180deg); }
-  .indicator-detail { padding: 0 14px 14px; font-size: 13px; line-height: 1.5; display: none; }
-  .indicator-detail.open { display: block; }
+  .indicator-detail { padding: 0 16px 16px; font-size: 13px; line-height: 1.6; display: none; }
+  .indicator-detail.open { display: block; animation: fadeIn 0.2s ease-out; }
   .indicator-detail strong { color: #374151; }
-  .indicator-detail p { margin: 4px 0; color: #4b5563; }
-  .customer-msg { padding: 10px; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; margin-top: 8px; }
-  .customer-msg strong { font-size: 12px; }
-  .customer-msg p { font-size: 12px; margin: 4px 0 0; }
+  .indicator-detail p { margin: 6px 0; color: #4b5563; }
+  .customer-msg { padding: 12px; background: #fff; border-radius: 8px; border: 1px solid #e5e7eb; margin-top: 10px; }
+  .customer-msg strong { font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: #6b7280; }
+  .customer-msg p { font-size: 13px; margin: 6px 0 0; color: #374151; }
 
   /* Clarification */
-  .clarification-section { padding: 14px; background: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe; margin-bottom: 20px; }
-  .clarification-section .label { font-size: 11px; color: #1e40af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600; }
-  .clarification-section textarea { width: 100%; min-height: 100px; padding: 10px; border-radius: 6px; border: 1px solid #bfdbfe; font-size: 13px; font-family: inherit; resize: vertical; }
-  .save-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-  .save-btn { padding: 6px 16px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: 500; }
-  .save-btn:hover { background: #1d4ed8; }
-  .save-confirm { font-size: 12px; color: #16a34a; }
+  .clarification-section { padding: 18px; background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%); border-radius: 12px; border: 1px solid #bfdbfe; margin-bottom: 20px; }
+  .clarification-section .label { font-size: 11px; color: #1e40af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; font-weight: 700; }
+  .clarification-section textarea { width: 100%; min-height: 100px; padding: 12px; border-radius: 8px; border: 2px solid #bfdbfe; font-size: 13px; font-family: inherit; resize: vertical; transition: all 0.2s; }
+  .clarification-section textarea:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+  .save-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+  .save-btn { padding: 10px 20px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+  .save-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+  .save-confirm { font-size: 13px; color: #16a34a; font-weight: 600; }
 
-  /* Paste modal */
-  .paste-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; justify-content: center; align-items: center; }
-  .paste-modal.active { display: flex; }
-  .paste-box { background: #fff; border-radius: 12px; padding: 24px; width: 600px; max-height: 80vh; display: flex; flex-direction: column; }
-  .paste-box h3 { margin-bottom: 12px; }
-  .paste-box textarea { flex: 1; min-height: 300px; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: monospace; font-size: 12px; resize: vertical; }
-  .paste-box .actions { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
-  .paste-box .btn-primary { padding: 8px 20px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
-  .paste-box .btn-secondary { padding: 8px 20px; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; }
+  /* Modals */
+  .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 200; display: none; justify-content: center; align-items: center; }
+  .modal.active { display: flex; animation: fadeIn 0.2s ease-out; }
+  .modal-box { background: #fff; border-radius: 16px; padding: 28px; width: 600px; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
+  .modal-box h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; color: #111827; }
+  .modal-box > p { font-size: 14px; color: #6b7280; margin-bottom: 20px; line-height: 1.5; }
+  .modal-box textarea { width: 100%; min-height: 250px; padding: 14px; border: 2px solid #e5e7eb; border-radius: 10px; font-family: 'SF Mono', Monaco, monospace; font-size: 12px; resize: vertical; transition: all 0.2s; }
+  .modal-box textarea:focus { outline: none; border-color: #2563eb; }
+  .modal-box input[type=text] { width: 100%; padding: 12px 14px; border: 2px solid #e5e7eb; border-radius: 10px; font-family: 'SF Mono', Monaco, monospace; font-size: 13px; margin-bottom: 16px; transition: all 0.2s; }
+  .modal-box input[type=text]:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+  .btn-primary { padding: 10px 24px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+  .btn-secondary { padding: 10px 24px; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; }
+  .btn-secondary:hover { background: #e5e7eb; }
 
-  /* Sync status */
-  .sync-indicator { display: flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 500; }
-  .sync-connected { background: #dcfce7; color: #166534; }
-  .sync-local { background: #fef9c3; color: #854d0e; }
-  .sync-error { background: #fee2e2; color: #991b1b; }
-  .sync-loading { background: #eff6ff; color: #1e40af; }
-
-  /* Config modal */
-  .config-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; justify-content: center; align-items: center; }
-  .config-modal.active { display: flex; }
-  .config-box { background: #fff; border-radius: 12px; padding: 24px; width: 520px; }
-  .config-box h3 { margin-bottom: 8px; }
-  .config-box p { font-size: 13px; color: #6b7280; margin-bottom: 12px; }
-  .config-box input { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: monospace; font-size: 12px; margin-bottom: 12px; }
-  .config-box .actions { display: flex; gap: 8px; justify-content: flex-end; }
+  /* Help Modal */
+  .help-modal .modal-box { width: 680px; }
+  .help-section { margin-bottom: 24px; }
+  .help-section h4 { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .help-section h4 .step-num { background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); color: #fff; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .help-section p { font-size: 13px; color: #4b5563; line-height: 1.6; margin-bottom: 8px; }
+  .help-section .code-block { background: #1f2937; color: #e5e7eb; padding: 12px 16px; border-radius: 8px; font-family: 'SF Mono', Monaco, monospace; font-size: 11px; overflow-x: auto; margin: 10px 0; word-break: break-all; }
+  .help-tip { background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%); border: 1px solid #fde047; border-radius: 10px; padding: 14px 16px; margin: 16px 0; }
+  .help-tip strong { color: #854d0e; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .help-tip p { color: #854d0e; margin: 6px 0 0; font-size: 13px; }
+  .help-warning { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: 1px solid #fca5a5; border-radius: 10px; padding: 14px 16px; margin: 16px 0; }
+  .help-warning strong { color: #991b1b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .help-warning p { color: #991b1b; margin: 6px 0 0; font-size: 13px; }
+  .help-list { list-style: none; padding: 0; margin: 12px 0; }
+  .help-list li { padding: 8px 0 8px 24px; position: relative; font-size: 13px; color: #4b5563; }
+  .help-list li::before { content: ''; position: absolute; left: 0; top: 14px; width: 8px; height: 8px; background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); border-radius: 50%; }
 
   /* Checklist Q&A */
-  .qa-section { padding: 14px; background: #fff7ed; border-radius: 8px; border: 1px solid #fed7aa; margin-bottom: 20px; }
-  .qa-section .qa-header { font-size: 11px; color: #c2410c; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; font-weight: 600; }
-  .qa-item { padding: 10px 12px; background: #fff; border-radius: 6px; border: 1px solid #fed7aa; margin-bottom: 6px; }
-  .qa-item .qa-q { font-size: 12px; color: #9a3412; font-weight: 600; margin-bottom: 4px; }
-  .qa-item .qa-a { font-size: 13px; color: #374151; white-space: pre-wrap; }
+  .qa-section { padding: 18px; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-radius: 12px; border: 1px solid #fed7aa; margin-bottom: 20px; }
+  .qa-section .qa-header { font-size: 11px; color: #c2410c; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; font-weight: 700; }
+  .qa-item { padding: 12px 14px; background: #fff; border-radius: 8px; border: 1px solid #fed7aa; margin-bottom: 8px; }
+  .qa-item .qa-q { font-size: 12px; color: #9a3412; font-weight: 700; margin-bottom: 6px; }
+  .qa-item .qa-a { font-size: 13px; color: #374151; white-space: pre-wrap; line-height: 1.5; }
   .qa-loading { font-size: 13px; color: #9a3412; font-style: italic; }
   .qa-unavailable { font-size: 13px; color: #9ca3af; font-style: italic; }
 
   /* PIN Lock Screen */
-  .lock-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #111827; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+  .lock-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #111827 0%, #1f2937 50%, #111827 100%); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+  .lock-screen::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23374151' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); opacity: 0.5; }
   .lock-screen.hidden { display: none; }
-  .lock-box { background: #1f2937; border-radius: 16px; padding: 40px; width: 340px; text-align: center; border: 1px solid #374151; }
-  .lock-box h1 { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 4px; }
-  .lock-box p { font-size: 13px; color: #9ca3af; margin-bottom: 24px; }
-  .lock-box input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #4b5563; background: #374151; color: #fff; font-size: 20px; text-align: center; letter-spacing: 8px; font-family: monospace; outline: none; }
-  .lock-box input:focus { border-color: #60a5fa; }
-  .lock-box button { width: 100%; padding: 10px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px; }
-  .lock-box button:hover { background: #1d4ed8; }
-  .lock-error { color: #f87171; font-size: 13px; margin-top: 10px; min-height: 20px; }
+  .lock-box { background: linear-gradient(135deg, #1f2937 0%, #374151 100%); border-radius: 24px; padding: 48px 40px; width: 380px; text-align: center; border: 1px solid #4b5563; box-shadow: 0 25px 50px rgba(0,0,0,0.5); position: relative; z-index: 1; }
+  .lock-box h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -1px; }
+  .lock-box .subtitle { font-size: 14px; color: #9ca3af; margin-bottom: 32px; }
+  .lock-box input { width: 100%; padding: 16px; border-radius: 12px; border: 2px solid #4b5563; background: #374151; color: #fff; font-size: 24px; text-align: center; letter-spacing: 12px; font-family: 'SF Mono', Monaco, monospace; outline: none; transition: all 0.2s; }
+  .lock-box input:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2); }
+  .lock-box input::placeholder { letter-spacing: 8px; font-size: 20px; }
+  .lock-box button { width: 100%; padding: 14px; background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 20px; transition: all 0.2s; }
+  .lock-box button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4); }
+  .lock-error { color: #f87171; font-size: 14px; margin-top: 16px; min-height: 24px; font-weight: 500; }
   .app-content { display: none; }
   .app-content.unlocked { display: block; }
+
+  /* Config modal status */
+  .config-status { font-size: 13px; color: #6b7280; margin-bottom: 16px; padding: 12px; background: #f9fafb; border-radius: 8px; }
+  .config-status strong { color: #374151; }
+
+  /* Auto-sync toggle */
+  .auto-sync-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px; background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%); border-radius: 10px; border: 1px solid #bfdbfe; }
+  .auto-sync-row label { font-size: 13px; color: #1e40af; font-weight: 600; flex: 1; }
+  .toggle-switch { position: relative; width: 48px; height: 26px; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #d1d5db; border-radius: 26px; transition: 0.3s; }
+  .toggle-slider::before { position: absolute; content: ''; height: 20px; width: 20px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+  .toggle-switch input:checked + .toggle-slider { background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); }
+  .toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }
+
+  /* Footer */
+  .footer { text-align: center; padding: 20px; color: #9ca3af; font-size: 12px; }
+  .footer a { color: #6b7280; text-decoration: none; }
+  .footer a:hover { color: #2563eb; }
+
+  /* Responsive */
+  @media (max-width: 1200px) {
+    .stats { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 768px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .topbar { flex-direction: column; gap: 12px; }
+    .topbar-actions { flex-wrap: wrap; justify-content: center; }
+    .detail-panel { width: 100%; min-width: unset; }
+    .modal-box { width: 95%; margin: 20px; }
+  }
 </style>
 </head>
 <body>
@@ -162,9 +231,9 @@
 <div class="lock-screen" id="lockScreen">
   <div class="lock-box">
     <h1>ARMOR</h1>
-    <p>Enter PIN to access the dashboard</p>
-    <input type="password" id="pinInput" maxlength="10" placeholder="····" onkeydown="if(event.key==='Enter')checkPin()">
-    <button onclick="checkPin()">Unlock</button>
+    <p class="subtitle">Checklist Analyzer Dashboard</p>
+    <input type="password" id="pinInput" maxlength="10" placeholder="PIN" onkeydown="if(event.key==='Enter')checkPin()">
+    <button onclick="checkPin()">Unlock Dashboard</button>
     <div class="lock-error" id="pinError"></div>
   </div>
 </div>
@@ -174,17 +243,17 @@
 
 <!-- Top Bar -->
 <div class="topbar">
-  <div style="display:flex;align-items:center">
-    <span class="topbar-title">ARMOR</span>
+  <div class="topbar-left">
+    <span class="topbar-title"><span>ARMOR</span></span>
     <span class="topbar-sub">Checklist Analyzer Dashboard</span>
   </div>
   <div class="topbar-actions">
-    <span id="syncStatus" class="sync-indicator sync-local">● Local Only</span>
+    <span id="syncStatus" class="sync-indicator sync-local"><span class="sync-dot"></span> Local Only</span>
+    <button class="topbar-btn" onclick="document.getElementById('helpModal').classList.add('active')">? Help</button>
     <button class="topbar-btn" onclick="document.getElementById('pasteModal').classList.add('active')">Paste JSON</button>
-    <button class="topbar-btn"><label>Import File<input type="file" accept=".json,.jsonl" onchange="handleFileImport(event)"></label></button>
-    <button class="topbar-btn" onclick="exportJsonl()">Export JSONL</button>
-    <button class="topbar-btn" onclick="exportJson()">Export JSON</button>
-    <button class="topbar-btn" onclick="document.getElementById('configModal').classList.add('active')">⚙ Sync</button>
+    <button class="topbar-btn"><label>Import<input type="file" accept=".json,.jsonl" onchange="handleFileImport(event)"></label></button>
+    <button class="topbar-btn" onclick="exportJson()">Export</button>
+    <button class="topbar-btn primary" onclick="document.getElementById('configModal').classList.add('active')">Sync Settings</button>
   </div>
 </div>
 
@@ -228,6 +297,11 @@
   </div>
 </div>
 
+<!-- Footer -->
+<div class="footer">
+  <p>ARMOR Checklist Dashboard v2.0 | <a href="#" onclick="document.getElementById('helpModal').classList.add('active');return false;">Setup Guide</a></p>
+</div>
+
 <!-- Detail Panel -->
 <div class="overlay" id="overlay" onclick="closeDetail()"></div>
 <div class="detail-panel" id="detailPanel">
@@ -236,37 +310,102 @@
       <h2 id="detailCompany"></h2>
       <p id="detailEmail"></p>
     </div>
-    <button class="detail-close" onclick="closeDetail()">✕</button>
+    <button class="detail-close" onclick="closeDetail()">X Close</button>
   </div>
   <div class="detail-body" id="detailBody"></div>
 </div>
 
 <!-- Paste Modal -->
-<div class="paste-modal" id="pasteModal">
-  <div class="paste-box">
+<div class="modal" id="pasteModal">
+  <div class="modal-box">
     <h3>Paste JSON Results</h3>
-    <p style="font-size:13px;color:#6b7280;margin-bottom:12px">Paste one or more JSON evaluation results (single object, array, or one-per-line JSONL).</p>
+    <p>Paste one or more JSON evaluation results (single object, array, or one-per-line JSONL format).</p>
     <textarea id="pasteArea" placeholder='{"company":"...","checklist_score":33,...}'></textarea>
-    <div class="actions">
+    <div class="modal-actions">
       <button class="btn-secondary" onclick="document.getElementById('pasteModal').classList.remove('active')">Cancel</button>
-      <button class="btn-primary" onclick="handlePasteImport()">Import</button>
+      <button class="btn-primary" onclick="handlePasteImport()">Import Data</button>
     </div>
   </div>
 </div>
 
 <!-- Config Modal -->
-<div class="config-modal" id="configModal">
-  <div class="config-box">
-    <h3>Google Sheets Sync</h3>
-    <p>Paste your Google Apps Script web app URL to enable shared data across teammates. Leave blank to use local-only storage.</p>
+<div class="modal" id="configModal">
+  <div class="modal-box">
+    <h3>Sync Settings</h3>
+    <p>Connect to Google Sheets for shared team data. The sync URL enables real-time collaboration across teammates.</p>
+
+    <div class="auto-sync-row">
+      <label>Auto-sync every 60 seconds</label>
+      <label class="toggle-switch">
+        <input type="checkbox" id="autoSyncToggle" onchange="toggleAutoSync()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <label style="font-size:12px;color:#6b7280;font-weight:600;display:block;margin-bottom:6px;">SYNC URL</label>
     <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
-    <div style="font-size:12px;color:#6b7280;margin-bottom:12px">
+
+    <div class="config-status">
       <strong>Status:</strong> <span id="configStatusText">Not connected</span>
     </div>
-    <div class="actions">
+
+    <div id="lastSyncTime" style="font-size:12px;color:#9ca3af;margin-bottom:16px;"></div>
+
+    <div class="modal-actions">
       <button class="btn-secondary" onclick="disconnectSync()">Disconnect</button>
       <button class="btn-secondary" onclick="document.getElementById('configModal').classList.remove('active')">Cancel</button>
-      <button class="btn-primary" onclick="saveAndTestSync()">Save & Test</button>
+      <button class="btn-primary" onclick="saveAndTestSync()">Save & Connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal help-modal" id="helpModal">
+  <div class="modal-box">
+    <h3>ARMOR Dashboard Setup Guide</h3>
+    <p>Welcome to the ARMOR Checklist Analyzer Dashboard. Follow these steps to get started.</p>
+
+    <div class="help-section">
+      <h4><span class="step-num">1</span> What You Need</h4>
+      <ul class="help-list">
+        <li>Google Chrome browser (recommended)</li>
+        <li>The dashboard PIN (provided by your team lead)</li>
+        <li>The sync URL (provided below or by your team lead)</li>
+      </ul>
+    </div>
+
+    <div class="help-section">
+      <h4><span class="step-num">2</span> Enter the PIN</h4>
+      <p>Type the 4-digit PIN and click Unlock. The PIN is required every time you open the dashboard in a new browser session.</p>
+    </div>
+
+    <div class="help-section">
+      <h4><span class="step-num">3</span> Connect to Shared Data</h4>
+      <p>Click the <strong>Sync Settings</strong> button in the top-right corner. Paste the sync URL below and click <strong>Save & Connect</strong>.</p>
+      <div class="code-block" id="syncUrlDisplay">https://script.google.com/macros/s/AKfycbx-0XkYj2qeJ5H1enP0-ov6ZtlkaFjXlp8uIi-RzYhdkyT-oOB5FPrUCoEDdJZ3AaoxVA/exec</div>
+      <button class="btn-secondary" style="margin-top:8px;font-size:12px;padding:8px 16px;" onclick="copyUrl()">Copy URL</button>
+    </div>
+
+    <div class="help-section">
+      <h4><span class="step-num">4</span> Verify Connection</h4>
+      <p>You should see a green "Synced" indicator in the top bar. All submissions will load into the table automatically.</p>
+    </div>
+
+    <div class="help-tip">
+      <strong>Good to Know</strong>
+      <p><strong>One-time setup:</strong> You only need to enter the sync URL once. The dashboard remembers it.</p>
+      <p><strong>Auto-sync:</strong> Enable auto-sync in settings to refresh data every 60 seconds automatically.</p>
+      <p><strong>Offline mode:</strong> The dashboard works offline using a local cache and re-syncs when you reload.</p>
+      <p><strong>Clarifications:</strong> You can add notes from the detail panel. These sync to the shared sheet.</p>
+    </div>
+
+    <div class="help-warning">
+      <strong>Security Notice</strong>
+      <p>Do not share the dashboard file, PIN, or sync URL with customers or anyone outside the team. The dashboard contains sensitive evaluation data.</p>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="document.getElementById('helpModal').classList.remove('active')">Got It!</button>
     </div>
   </div>
 </div>
@@ -274,6 +413,10 @@
 </div><!-- /app-content -->
 
 <script>
+// ── Configuration ──
+const DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbx-0XkYj2qeJ5H1enP0-ov6ZtlkaFjXlp8uIi-RzYhdkyT-oOB5FPrUCoEDdJZ3AaoxVA/exec';
+const AUTO_SYNC_INTERVAL = 60000; // 60 seconds
+
 // ── PIN Authentication ──
 const PIN_HASH = 'fbce66f99c809283638f344ecb3d50674ea64189'; // SHA-1 of 1414
 const PIN_SESSION_KEY = 'armor_pin_authenticated';
@@ -292,7 +435,7 @@ async function checkPin() {
     sessionStorage.setItem(PIN_SESSION_KEY, 'true');
     unlockApp();
   } else {
-    document.getElementById('pinError').textContent = 'Incorrect PIN';
+    document.getElementById('pinError').textContent = 'Incorrect PIN. Please try again.';
     document.getElementById('pinInput').value = '';
     document.getElementById('pinInput').focus();
   }
@@ -313,6 +456,9 @@ if (sessionStorage.getItem(PIN_SESSION_KEY) === 'true') {
 
 // ── Sync Config ──
 const SYNC_URL_KEY = 'armor_checklist_dashboard_sync_url';
+const AUTO_SYNC_KEY = 'armor_auto_sync_enabled';
+let autoSyncTimer = null;
+let lastSyncTime = null;
 
 function getSyncUrl() {
   try { return localStorage.getItem(SYNC_URL_KEY) || ''; } catch(e) { return ''; }
@@ -322,11 +468,70 @@ function setSyncUrl(url) {
 }
 function isCloudMode() { return !!getSyncUrl(); }
 
+function getAutoSync() {
+  try { return localStorage.getItem(AUTO_SYNC_KEY) === 'true'; } catch(e) { return false; }
+}
+function setAutoSync(enabled) {
+  try { localStorage.setItem(AUTO_SYNC_KEY, enabled ? 'true' : 'false'); } catch(e) {}
+}
+
+function toggleAutoSync() {
+  const enabled = document.getElementById('autoSyncToggle').checked;
+  setAutoSync(enabled);
+  if (enabled && isCloudMode()) {
+    startAutoSync();
+  } else {
+    stopAutoSync();
+  }
+  updateSyncStatusDisplay();
+}
+
+function startAutoSync() {
+  stopAutoSync();
+  autoSyncTimer = setInterval(async () => {
+    if (isCloudMode()) {
+      await cloudFetch();
+    }
+  }, AUTO_SYNC_INTERVAL);
+  console.log('Auto-sync started');
+}
+
+function stopAutoSync() {
+  if (autoSyncTimer) {
+    clearInterval(autoSyncTimer);
+    autoSyncTimer = null;
+  }
+}
+
+function updateSyncStatusDisplay() {
+  const el = document.getElementById('syncStatus');
+  const url = getSyncUrl();
+  const autoSync = getAutoSync();
+
+  if (!url) {
+    el.className = 'sync-indicator sync-local';
+    el.innerHTML = '<span class="sync-dot"></span> Local Only';
+  } else if (autoSync && autoSyncTimer) {
+    el.className = 'sync-indicator sync-connected';
+    el.innerHTML = `<span class="sync-dot"></span> Synced (${submissions.length}) <span class="sync-timer">Auto</span>`;
+  } else {
+    el.className = 'sync-indicator sync-connected';
+    el.innerHTML = `<span class="sync-dot"></span> Synced (${submissions.length})`;
+  }
+}
+
 function updateSyncStatus(state, text) {
   const el = document.getElementById('syncStatus');
   el.className = 'sync-indicator sync-' + state;
-  const icons = { connected: '●', local: '●', error: '●', loading: '◌' };
-  el.textContent = (icons[state] || '●') + ' ' + text;
+  el.innerHTML = `<span class="sync-dot"></span> ${text}`;
+}
+
+function updateLastSyncTime() {
+  lastSyncTime = new Date();
+  const el = document.getElementById('lastSyncTime');
+  if (el) {
+    el.textContent = 'Last synced: ' + lastSyncTime.toLocaleTimeString();
+  }
 }
 
 async function saveAndTestSync() {
@@ -342,13 +547,24 @@ async function saveAndTestSync() {
     if (json.success) {
       setSyncUrl(url);
       document.getElementById('configStatusText').textContent = 'Connected! ' + json.data.length + ' submissions found.';
-      document.getElementById('configModal').classList.remove('active');
-      updateSyncStatus('connected', 'Synced (' + json.data.length + ')');
+      updateLastSyncTime();
+
       // Load cloud data
       submissions = deduplicateSubmissions(json.data);
-      saveToStorage(); // cache locally too
+      saveToStorage();
       renderStats();
       renderTable();
+
+      // Start auto-sync if enabled
+      if (getAutoSync()) {
+        startAutoSync();
+      }
+
+      updateSyncStatusDisplay();
+
+      setTimeout(() => {
+        document.getElementById('configModal').classList.remove('active');
+      }, 1000);
     } else {
       document.getElementById('configStatusText').textContent = 'Error: ' + (json.error || 'Unknown error');
     }
@@ -359,10 +575,11 @@ async function saveAndTestSync() {
 
 function disconnectSync() {
   setSyncUrl('');
+  stopAutoSync();
   document.getElementById('scriptUrlInput').value = '';
-  document.getElementById('configStatusText').textContent = 'Disconnected — using local storage only';
+  document.getElementById('configStatusText').textContent = 'Disconnected. Using local storage only.';
   document.getElementById('configModal').classList.remove('active');
-  updateSyncStatus('local', 'Local Only');
+  updateSyncStatusDisplay();
 }
 
 // Cloud operations
@@ -374,7 +591,12 @@ async function cloudFetch() {
     const resp = await fetch(url);
     const json = await resp.json();
     if (json.success) {
-      updateSyncStatus('connected', 'Synced (' + json.data.length + ')');
+      submissions = deduplicateSubmissions(json.data);
+      saveToStorage();
+      renderStats();
+      renderTable();
+      updateLastSyncTime();
+      updateSyncStatusDisplay();
       return json.data;
     } else {
       updateSyncStatus('error', 'Sync error');
@@ -390,21 +612,13 @@ async function cloudSave(items) {
   const url = getSyncUrl();
   if (!url) return null;
   try {
-    // Fire-and-forget POST (Google Apps Script redirects break normal response reading)
     await fetch(url, {
       method: 'POST',
       mode: 'no-cors',
       body: JSON.stringify({ submissions: Array.isArray(items) ? items : [items] })
     });
-    // Wait for Apps Script to process, then verify via GET
     await new Promise(r => setTimeout(r, 2000));
-    const fresh = await cloudFetch();
-    if (fresh) {
-      submissions = deduplicateSubmissions(fresh);
-      saveToStorage();
-      renderStats();
-      renderTable();
-    }
+    await cloudFetch();
     return { success: true };
   } catch (err) {
     updateSyncStatus('error', 'Save failed');
@@ -428,7 +642,6 @@ async function cloudDelete(email) {
   }
 }
 
-// Fetch checklist Q&A from Analyzer Input tab
 async function fetchChecklistQA(email) {
   const url = getSyncUrl();
   if (!url) return null;
@@ -449,7 +662,6 @@ function renderQASection(containerId, qaData) {
     el.innerHTML = '<p class="qa-unavailable">No checklist Q&A data found for this customer</p>';
     return;
   }
-  // Skip metadata columns (A-E, cols 1-5) and show only the Q&A columns (F+)
   const qaItems = qaData.filter(item => item.col >= 6);
   if (qaItems.length === 0) {
     el.innerHTML = '<p class="qa-unavailable">No checklist Q&A data found for this customer</p>';
@@ -458,6 +670,16 @@ function renderQASection(containerId, qaData) {
   el.innerHTML = qaItems.map(item =>
     `<div class="qa-item"><div class="qa-q">${item.question}</div><div class="qa-a">${item.answer}</div></div>`
   ).join('');
+}
+
+// Copy URL helper
+function copyUrl() {
+  const url = document.getElementById('syncUrlDisplay').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy URL'; }, 2000);
+  });
 }
 
 // ── Persistence ──
@@ -479,34 +701,28 @@ let selectedIdx = null;
 let sortField = '_analyzed_at';
 let sortDir = 'desc';
 
-// ── Sample data (used only on first load) ──
+// ── Sample data ──
 const SAMPLE = {
-  company: "Minnesota Insurance Agencies",
-  customer_email: "ryan.libby@midwestinsuranceagencies.com",
-  user_id: "1253984611",
-  answer_purpose: "Minnesota Insurance Agencies states the purpose of their calls is to provide value, build relationships, or deliver necessary information. No specific product, service, or recipient profile is described.",
-  answer_reaction: "The caller states recipients may react poorly because they may be busy at the time or have technical issues.",
-  checklist_summary: 'These calls are potentially unwanted / at face value, these calls sound "spammy"',
-  checklist_score: 33,
+  company: "Sample Company Inc.",
+  customer_email: "demo@example.com",
+  user_id: "1234567890",
+  answer_purpose: "This is sample data to demonstrate the dashboard. Connect to Google Sheets to see real data.",
+  answer_reaction: "Recipients may react positively as calls are expected and requested.",
+  checklist_summary: 'This is a demo submission to show dashboard functionality',
+  checklist_score: 66,
   checklist_status: "Insufficient",
-  selected_indicator_codes: "h,l,n,q,r",
+  selected_indicator_codes: "l",
   selected_indicators: [
-    {id:"H",type:"Bad",label:"Bad – calls are not requested by recipient",evidence:["Caller answered 'No' to direct consent and 'No' to prior business relationship. No evidence of recipient-initiated contact or opt-in."],customer_message:"Carriers consider calls that are not explicitly requested by recipients to be deserving of spam flags, especially when there is evidence of negative consumer feedback such as low answer rates, short call durations, customer complaints, or number blocks. When calls are viewed as unexpected or unsolicited, remediation options are extremely limited, and ARMOR® is not able to pursue further remediation until calling practices or consumer feedback change materially."},
-    {id:"L",type:"Inconclusive",label:"Inconclusive – unclear call purpose",evidence:["Call purpose is described as 'to provide value, build relationships, or deliver necessary information.' This is generic and does not identify the business type, product, service, or recipient profile."],customer_message:"Carriers evaluate whether calls are appropriate based on a clear, consistent call purpose. Please describe what your business does, who you call, and the primary purpose of your calls."},
-    {id:"N",type:"Inconclusive",label:"Inconclusive – unclear lead sources or processes",evidence:["Lead curation is described only as 'Our numbers are verified with software.' No explanation is provided for where leads originate or how contact information is obtained."],customer_message:"Lead quality creates clear signals carriers use to evaluate whether calls are expected and/or well-received by recipients. Please describe how you get your leads, and ensure they are well-targeted to your product/service."},
-    {id:"Q",type:"Inconclusive",label:"Inconclusive – Do Not Call process unclear",evidence:["The DNC explanation only directs recipients to register on the national donotcall.gov registry. No internal operational process is described for honoring opt-out requests."],customer_message:"Carriers expect clear Do-Not-Call controls to ensure recipients on the list are not contacted. Please describe how you prevent calling contacts on the Do-Not-Call list, how opt-out options are disclosed to contacts, and how opt-out requests are handled and enforced."},
-    {id:"R",type:"Inconclusive",label:"Inconclusive – call timing and frequency controls are unclear",evidence:["Frequency is partially addressed but no call timing limits are described — no business-hour windows, time-zone restrictions, or weekday-only policies."],customer_message:"Even requested calls can become a nuisance if they are too frequent, too close together, or placed at inopportune times. Please describe how call timing is determined and how call frequency is limited."}
+    {id:"L",type:"Inconclusive",label:"Inconclusive - Demo indicator",evidence:["This is sample evidence for demonstration purposes."],customer_message:"This is a sample customer message. Connect to your team's Google Sheet to see real evaluation data."}
   ],
   checklist_summary_notes: [
-    "No evidence of prior business relationship or recipient-initiated request; calls are classified as unrequested.",
-    "Call purpose, lead sourcing, DNC process, and call timing controls are all insufficiently described.",
-    "Summary is Potentially Unwanted because unrequested calls (H) are paired with multiple unresolved ambiguities (L, N, Q, R)."
+    "This is sample data for demonstration.",
+    "Connect to Google Sheets using the Sync Settings button to load real data."
   ],
   customer_clarification: "",
   _analyzed_at: new Date().toISOString()
 };
 
-// Deduplicate array by customer_email, keeping the most recent entry
 function deduplicateSubmissions(arr) {
   const seen = new Map();
   arr.forEach(s => {
@@ -514,7 +730,6 @@ function deduplicateSubmissions(arr) {
     if (!key) { seen.set(Math.random().toString(), s); return; }
     const existing = seen.get(key);
     if (!existing || (s._analyzed_at || '') > (existing._analyzed_at || '')) {
-      // Preserve clarification from older entry if newer is empty
       if (existing && !s.customer_clarification && existing.customer_clarification) {
         s.customer_clarification = existing.customer_clarification;
       }
@@ -524,11 +739,9 @@ function deduplicateSubmissions(arr) {
   return Array.from(seen.values());
 }
 
-// Load saved data or use sample on first run
 const saved = loadFromStorage();
 if (saved && saved.length > 0) {
   submissions = deduplicateSubmissions(saved);
-  // Save back if dedup removed any entries
   if (submissions.length !== saved.length) saveToStorage();
 } else {
   submissions.push(SAMPLE);
@@ -567,12 +780,18 @@ function importMessage(r) {
 function renderStats() {
   const total = submissions.length;
   const suf = submissions.filter(s => s.checklist_status === 'Sufficient').length;
+  const insuf = total - suf;
   const s33 = submissions.filter(s => s.checklist_score === 33).length;
   const s66 = submissions.filter(s => s.checklist_score === 66).length;
   const s100 = submissions.filter(s => s.checklist_score === 100).length;
+
   document.getElementById('statsRow').innerHTML = [
-    {l:'Total',v:total,bg:'#fff'},{l:'Sufficient',v:suf,bg:'#dcfce7'},{l:'Insufficient',v:total-suf,bg:'#fee2e2'},
-    {l:'Score 33',v:s33,bg:'#fee2e2'},{l:'Score 66',v:s66,bg:'#fef9c3'},{l:'Score 100',v:s100,bg:'#dcfce7'}
+    {l:'Total Submissions',v:total,bg:'linear-gradient(135deg, #fff 0%, #f9fafb 100%)'},
+    {l:'Sufficient',v:suf,bg:'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)'},
+    {l:'Insufficient',v:insuf,bg:'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)'},
+    {l:'Score 33',v:s33,bg:'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)'},
+    {l:'Score 66',v:s66,bg:'linear-gradient(135deg, #fef9c3 0%, #fef08a 100%)'},
+    {l:'Score 100',v:s100,bg:'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)'}
   ].map(s => `<div class="stat-card" style="background:${s.bg}"><div class="stat-label">${s.l}</div><div class="stat-value">${s.v}</div></div>`).join('');
 }
 
@@ -607,7 +826,6 @@ function toggleSort(field) {
 
 // ── Table ──
 function renderTable() {
-  // Sort indicators
   ['company','user_id','customer_email','checklist_score','checklist_status','selected_indicator_codes','_analyzed_at'].forEach(f => {
     const el = document.getElementById('sort_' + f);
     if (el) el.textContent = sortField === f ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '';
@@ -618,16 +836,16 @@ function renderTable() {
 
   const tbody = document.getElementById('tableBody');
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No submissions match your filters</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No submissions match your filters. Try adjusting your search.</td></tr>';
     return;
   }
   tbody.innerHTML = filtered.map((s, i) => {
     const idx = submissions.indexOf(s);
     const date = s._analyzed_at ? new Date(s._analyzed_at).toLocaleDateString() : '—';
     return `<tr class="${selectedIdx === idx ? 'selected' : ''}" onclick="openDetail(${idx})">
-      <td style="font-weight:500">${s.company || ''}</td>
-      <td style="color:#6b7280;font-family:monospace;font-size:12px">${s.user_id || ''}</td>
-      <td style="color:#6b7280">${s.customer_email || ''}</td>
+      <td style="font-weight:600;color:#111827">${s.company || '—'}</td>
+      <td style="color:#6b7280;font-family:'SF Mono',Monaco,monospace;font-size:12px">${s.user_id || '—'}</td>
+      <td style="color:#6b7280">${s.customer_email || '—'}</td>
       <td>${scoreBadge(s.checklist_score)}</td>
       <td>${statusBadge(s.checklist_status)}</td>
       <td>${indicatorBadges(s.selected_indicators)}</td>
@@ -640,35 +858,31 @@ function renderTable() {
 function openDetail(idx) {
   selectedIdx = idx;
   const s = submissions[idx];
-  document.getElementById('detailCompany').textContent = s.company;
-  document.getElementById('detailEmail').textContent = s.customer_email;
+  document.getElementById('detailCompany').textContent = s.company || 'Unknown Company';
+  document.getElementById('detailEmail').textContent = s.customer_email || 'No email';
 
   let html = '';
 
-  // Score row
   html += `<div class="detail-row">
     <div class="detail-card"><div class="detail-card-label">Score</div>${scoreBadge(s.checklist_score)}</div>
     <div class="detail-card"><div class="detail-card-label">Status</div>${statusBadge(s.checklist_status)}</div>
-    <div class="detail-card" style="flex:2"><div class="detail-card-label">User ID</div><span class="mono">${s.user_id}</span></div>
+    <div class="detail-card" style="flex:2"><div class="detail-card-label">User ID</div><span class="mono">${s.user_id || '—'}</span></div>
   </div>`;
 
-  // Summary
   html += `<div class="summary-card">
     <div class="detail-card-label">Checklist Summary</div>
-    <p class="main">${s.checklist_summary}</p>
+    <p class="main">${s.checklist_summary || 'No summary available'}</p>
     ${(s.checklist_summary_notes||[]).length ? '<div class="summary-notes">' + s.checklist_summary_notes.map(n => `<p>• ${n}</p>`).join('') + '</div>' : ''}
   </div>`;
 
-  // Purpose & Reaction
   html += `<div class="detail-row">
-    <div class="detail-card"><div class="detail-card-label">Call Purpose</div><p>${s.answer_purpose || ''}</p></div>
-    <div class="detail-card"><div class="detail-card-label">Potential Reaction</div><p>${s.answer_reaction || ''}</p></div>
+    <div class="detail-card"><div class="detail-card-label">Call Purpose</div><p>${s.answer_purpose || 'Not provided'}</p></div>
+    <div class="detail-card"><div class="detail-card-label">Potential Reaction</div><p>${s.answer_reaction || 'Not provided'}</p></div>
   </div>`;
 
-  // Indicators
   html += `<div class="indicators-section">
     <h3>Selected Indicators (${(s.selected_indicators||[]).length})</h3>
-    <div style="margin-bottom:10px">${indicatorBadges(s.selected_indicators)}</div>`;
+    <div style="margin-bottom:12px">${indicatorBadges(s.selected_indicators)}</div>`;
 
   (s.selected_indicators || []).forEach((ind, i) => {
     const cls = ind.type === 'Good' ? 'good' : ind.type === 'Bad' ? 'bad' : 'inconclusive';
@@ -678,52 +892,48 @@ function openDetail(idx) {
         <span class="arrow" id="arrow_${i}">▼</span>
       </button>
       <div class="indicator-detail" id="indDetail_${i}">
-        <div><strong>Evidence:</strong>${ind.evidence.map(e => `<p>${e}</p>`).join('')}</div>
-        ${ind.customer_message ? `<div class="customer-msg"><strong>Customer Message:</strong><p>${ind.customer_message}</p></div>` : ''}
+        <div><strong>Evidence:</strong>${(ind.evidence||[]).map(e => `<p>${e}</p>`).join('')}</div>
+        ${ind.customer_message ? `<div class="customer-msg"><strong>Customer Message</strong><p>${ind.customer_message}</p></div>` : ''}
       </div>
     </div>`;
   });
   html += '</div>';
 
-  // Clarification (editable — syncs to Submissions json_data + Analyzer Input Column B)
   const clarText = s.customer_clarification || (s.reanalysis && s.reanalysis.clarification_summary) || '';
   html += `<div class="clarification-section">
-    <div class="label">Customer Clarification</div>
-    <textarea id="clarificationInput" style="width:100%;min-height:80px;padding:10px;border-radius:6px;border:1px solid #bfdbfe;font-size:13px;font-family:inherit;resize:vertical" placeholder="Add customer clarification notes here...">${clarText}</textarea>
+    <div class="label">Customer Clarification Notes</div>
+    <textarea id="clarificationInput" placeholder="Add customer clarification notes here...">${clarText}</textarea>
     <div class="save-row">
-      <button class="save-btn" onclick="saveClarification(${idx})">Save</button>
-      <span class="save-confirm" id="saveConfirm" style="display:none">✓ Saved</span>
+      <button class="save-btn" onclick="saveClarification(${idx})">Save Notes</button>
+      <span class="save-confirm" id="saveConfirm" style="display:none">Saved!</span>
     </div>
   </div>`;
 
-  // Reanalysis
   if (s.reanalysis) {
-    html += `<div style="padding:14px;background:#f0fdf4;border-radius:8px;border:1px solid #86efac;margin-bottom:20px">
-      <div class="detail-card-label" style="color:#166534;font-weight:600">Re-analysis Results</div>
-      <p style="font-size:13px;color:#374151;margin:0 0 8px">${s.reanalysis.clarification_summary || ''}</p>
+    html += `<div style="padding:18px;background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%);border-radius:12px;border:1px solid #86efac;margin-bottom:20px">
+      <div class="detail-card-label" style="color:#166534;font-weight:700">Re-analysis Results</div>
+      <p style="font-size:13px;color:#374151;margin:8px 0">${s.reanalysis.clarification_summary || ''}</p>
       ${(s.reanalysis.change_log||[]).map(c => `<div style="font-size:12px;color:#4b5563;padding:4px 0"><span class="badge ${c.action==='added'?'badge-bad':'badge-good'}">${c.action}</span> ${c.indicator_id}: ${c.reason}</div>`).join('')}
     </div>`;
   }
 
-  // Manual Override
-  html += `<div style="padding:14px;background:#faf5ff;border-radius:8px;border:1px solid #d8b4fe;margin-bottom:20px">
-    <div class="detail-card-label" style="color:#7c3aed;font-weight:600">Manual Override</div>
+  html += `<div style="padding:18px;background:linear-gradient(135deg,#faf5ff 0%,#f3e8ff 100%);border-radius:12px;border:1px solid #d8b4fe;margin-bottom:20px">
+    <div class="detail-card-label" style="color:#7c3aed;font-weight:700">Manual Override</div>
     ${s.override_log && s.override_log.applied
-      ? `<div style="display:flex;gap:16px;margin:8px 0">
+      ? `<div style="display:flex;gap:16px;margin:10px 0">
           <div style="flex:1"><span style="font-size:12px;color:#6b7280;font-weight:600">Added:</span>
             <span style="font-size:13px;color:#374151;margin-left:6px">${(s.override_log.added || []).join(', ') || 'None'}</span></div>
           <div style="flex:1"><span style="font-size:12px;color:#6b7280;font-weight:600">Removed:</span>
             <span style="font-size:13px;color:#374151;margin-left:6px">${(s.override_log.removed || []).join(', ') || 'None'}</span></div>
         </div>
-        ${s.override_log.reason ? `<div style="margin-top:8px;padding:10px;background:#fff;border-radius:6px;border:1px solid #e9d5ff">
+        ${s.override_log.reason ? `<div style="margin-top:10px;padding:12px;background:#fff;border-radius:8px;border:1px solid #e9d5ff">
           <span style="font-size:12px;color:#6b7280;font-weight:600">Reason:</span>
-          <p style="font-size:13px;color:#374151;margin:4px 0 0">${s.override_log.reason}</p>
+          <p style="font-size:13px;color:#374151;margin:6px 0 0">${s.override_log.reason}</p>
         </div>` : ''}`
-      : `<p style="font-size:13px;color:#9ca3af;margin:8px 0 0;font-style:italic">No manual override applied</p>`
+      : `<p style="font-size:13px;color:#9ca3af;margin:10px 0 0;font-style:italic">No manual override applied</p>`
     }
   </div>`;
 
-  // Checklist Q&A section (loaded async from Analyzer Input tab)
   html += `<div class="qa-section">
     <div class="qa-header">Checklist Q&A</div>
     <div id="qaContent">${isCloudMode()
@@ -732,13 +942,12 @@ function openDetail(idx) {
     }</div>
   </div>`;
 
-  // Delete — placed at the bottom, well away from close button
-  html += `<div style="border-top:1px solid #e5e7eb;padding-top:16px;margin-top:12px;display:flex;align-items:center;gap:8px">
-    <span id="deleteInitial"><button onclick="showDeleteConfirm()" style="padding:5px 14px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:6px;font-size:12px;cursor:pointer;font-weight:500">Delete this submission</button></span>
-    <span id="deleteConfirm" style="display:none;align-items:center;gap:6px">
-      <span style="font-size:12px;color:#991b1b;font-weight:500">Are you sure?</span>
-      <button onclick="confirmDelete()" style="padding:5px 12px;background:#dc2626;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">Yes, delete</button>
-      <button onclick="cancelDelete()" style="padding:5px 12px;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:6px;font-size:12px;cursor:pointer">Cancel</button>
+  html += `<div style="border-top:2px solid #e5e7eb;padding-top:20px;margin-top:16px;display:flex;align-items:center;gap:10px">
+    <span id="deleteInitial"><button onclick="showDeleteConfirm()" style="padding:8px 18px;background:linear-gradient(135deg,#fee2e2 0%,#fecaca 100%);color:#991b1b;border:1px solid #fca5a5;border-radius:8px;font-size:13px;cursor:pointer;font-weight:600;transition:all 0.2s">Delete Submission</button></span>
+    <span id="deleteConfirm" style="display:none;align-items:center;gap:8px">
+      <span style="font-size:13px;color:#991b1b;font-weight:600">Are you sure?</span>
+      <button onclick="confirmDelete()" style="padding:8px 16px;background:#dc2626;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-weight:700">Yes, Delete</button>
+      <button onclick="cancelDelete()" style="padding:8px 16px;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:8px;font-size:13px;cursor:pointer;font-weight:600">Cancel</button>
     </span>
   </div>`;
 
@@ -747,7 +956,6 @@ function openDetail(idx) {
   document.getElementById('detailPanel').classList.add('active');
   renderTable();
 
-  // Async load Q&A if connected
   if (isCloudMode() && s.customer_email) {
     fetchChecklistQA(s.customer_email).then(qa => {
       renderQASection('qaContent', qa);
@@ -779,9 +987,7 @@ function saveClarification(idx) {
   submissions[idx].customer_clarification = text;
   saveToStorage();
   if (isCloudMode()) {
-    // Save to Submissions sheet (json_data)
     cloudSave(submissions[idx]);
-    // Also save to Analyzer Input Column B
     const email = submissions[idx].customer_email;
     if (email) {
       fetch(getSyncUrl(), {
@@ -793,10 +999,9 @@ function saveClarification(idx) {
   }
   const conf = document.getElementById('saveConfirm');
   conf.style.display = 'inline';
-  setTimeout(() => conf.style.display = 'none', 2000);
+  setTimeout(() => conf.style.display = 'none', 2500);
 }
 
-// ── Delete (two-step confirmation) ──
 function showDeleteConfirm() {
   document.getElementById('deleteInitial').style.display = 'none';
   document.getElementById('deleteConfirm').style.display = 'flex';
@@ -810,16 +1015,10 @@ function confirmDelete() {
   const email = submissions[selectedIdx].customer_email;
   submissions.splice(selectedIdx, 1);
   saveToStorage();
-  // Delete from cloud if connected
   if (isCloudMode()) { cloudDelete(email); }
   closeDetail();
   renderStats();
   renderTable();
-}
-// Reset delete state when opening a new detail
-function resetDeleteButtons() {
-  document.getElementById('deleteConfirm').style.display = 'none';
-  document.getElementById('deleteInitial').style.display = 'inline';
 }
 
 // ── Import/Export ──
@@ -845,7 +1044,6 @@ function addSubmissions(data) {
   saveToStorage();
   renderStats();
   renderTable();
-  // Push to cloud if connected
   if (isCloudMode()) { cloudSave(data); }
   return { added, replaced };
 }
@@ -889,11 +1087,6 @@ function handlePasteImport() {
   } catch(err) { alert('Parse error: ' + err.message); }
 }
 
-function exportJsonl() {
-  const text = submissions.map(s => JSON.stringify(s)).join('\n');
-  downloadFile(text, `armor-results-${new Date().toISOString().slice(0,10)}.jsonl`, 'application/jsonl');
-}
-
 function exportJson() {
   const text = JSON.stringify(submissions, null, 2);
   downloadFile(text, `armor-results-${new Date().toISOString().slice(0,10)}.json`, 'application/json');
@@ -907,24 +1100,27 @@ function downloadFile(content, filename, type) {
   URL.revokeObjectURL(url);
 }
 
-// ── Init (called after PIN verification) ──
+// ── Init ──
 async function initApp() {
   renderStats();
   renderTable();
 
-  // Initialize sync status and load from cloud if configured
+  // Initialize sync settings
   const url = getSyncUrl();
-  document.getElementById('scriptUrlInput').value = url;
+  const autoSync = getAutoSync();
+
+  document.getElementById('scriptUrlInput').value = url || DEFAULT_SYNC_URL;
+  document.getElementById('autoSyncToggle').checked = autoSync;
+
   if (url) {
     updateSyncStatus('loading', 'Connecting...');
     const data = await cloudFetch();
-    if (data) {
-      submissions = deduplicateSubmissions(data);
-      saveToStorage();
-      renderStats();
-      renderTable();
+    if (data && autoSync) {
+      startAutoSync();
     }
   }
+
+  updateSyncStatusDisplay();
 }
 </script>
 </body>
