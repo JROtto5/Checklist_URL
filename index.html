@@ -1713,15 +1713,32 @@ function toggleAutoSync() {
 
 function startAutoSync() {
   stopAutoSync();
-  autoSyncTimer = setInterval(async () => { if (isCloudMode()) await cloudFetch(); }, AUTO_SYNC_INTERVAL);
+  autoSyncTimer = setInterval(async () => {
+    if (isCloudMode()) {
+      const data = await cloudFetch();
+      if (data) {
+        submissions = deduplicateSubmissions(data);
+        saveToStorage();
+        renderStats();
+        renderTable();
+      }
+    }
+  }, AUTO_SYNC_INTERVAL);
 }
 
 function stopAutoSync() { if (autoSyncTimer) { clearInterval(autoSyncTimer); autoSyncTimer = null; } }
 
-function manualSync() {
+async function manualSync() {
   if (isCloudMode()) {
-    cloudFetch();
     showToast('Syncing data...', 'info');
+    const data = await cloudFetch();
+    if (data) {
+      submissions = deduplicateSubmissions(data);
+      saveToStorage();
+      renderStats();
+      renderTable();
+      showToast('Sync complete!', 'success');
+    }
   } else {
     showToast('Connect to sync first', 'error');
   }
@@ -1802,15 +1819,11 @@ async function cloudFetch() {
     const resp = await fetch(url);
     const json = await resp.json();
     if (json.success) {
-      submissions = deduplicateSubmissions(json.data);
-      saveToStorage();
-      renderStats();
-      renderTable();
+      updateSyncStatus('connected', 'Synced (' + json.data.length + ')');
       updateLastSyncTime();
-      updateSyncStatusDisplay();
       return json.data;
     } else {
-      updateSyncStatus('error', 'Error');
+      updateSyncStatus('error', 'Sync error');
       return null;
     }
   } catch (err) {
@@ -1825,7 +1838,13 @@ async function cloudSave(items) {
   try {
     await fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ submissions: Array.isArray(items) ? items : [items] }) });
     await new Promise(r => setTimeout(r, 2000));
-    await cloudFetch();
+    const fresh = await cloudFetch();
+    if (fresh) {
+      submissions = deduplicateSubmissions(fresh);
+      saveToStorage();
+      renderStats();
+      renderTable();
+    }
     return { success: true };
   } catch (err) {
     updateSyncStatus('error', 'Save failed');
@@ -2416,6 +2435,7 @@ async function initApp() {
   document.getElementById('autoSyncToggle').checked = autoSync;
   if (url) {
     updateSyncStatus('loading', 'Connecting...');
+    // Snapshot local clarification values before cloud refresh
     const localClars = {};
     submissions.forEach(s => {
       const key = (s.customer_email || '').toLowerCase().trim();
@@ -2423,9 +2443,11 @@ async function initApp() {
     });
     const data = await cloudFetch();
     if (data) {
+      submissions = deduplicateSubmissions(data);
+      // Preserve local clarification edits that may not have synced yet
       submissions.forEach(s => {
         const key = (s.customer_email || '').toLowerCase().trim();
-        if (key && key in localClars && localClars[key] !== s.customer_clarification) {
+        if (key && key in localClars && localClars[key] && localClars[key] !== s.customer_clarification) {
           s.customer_clarification = localClars[key];
         }
       });
